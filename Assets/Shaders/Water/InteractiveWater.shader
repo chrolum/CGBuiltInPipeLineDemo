@@ -5,6 +5,8 @@ Shader "Saltsuica/InteractWater"
         _Color("Tint", Color) = (1, 1, 1, .5)//discard
         _FoamC("Foam", Color) = (1, 1, 1, .5)
         _MainTex ("Texture", 2D) = "white" {}
+        _NoiseTex("Noise", 2D) = "" {}
+        _TextureDistort("TextureDistort", Range(0,1)) = 0.1
 
         _Scale("Scale", Range(0, 1)) = 0.5
         _Speed("Wave Speed", Range(0, 1)) = 0.5
@@ -69,6 +71,7 @@ Shader "Saltsuica/InteractWater"
             float4 _Color;
             sampler2D _CameraDepthTexture;
             float _Scale;
+            sampler2D _NoiseTex;
 
             //for wave
             float _Speed;
@@ -78,6 +81,12 @@ Shader "Saltsuica/InteractWater"
             //for foam line
             float _Foam;
             float _FoamC;
+
+            uniform float3 _Position;
+            uniform sampler2D _GlobalEffectRT;
+            uniform float _OrthographicCamSize;
+
+            float _TextureDistort;
 
             v2f vert (appdata v)
             {
@@ -94,6 +103,9 @@ Shader "Saltsuica/InteractWater"
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.srcPos = ComputeScreenPos(o.vertex);
                 o.normal = v.normal;
+
+
+
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
@@ -101,7 +113,8 @@ Shader "Saltsuica/InteractWater"
             fixed4 frag (v2f i) : SV_Target
             {
                 // sample the texture
-                half4 col = tex2D(_MainTex, i.worldPos.xz * _Scale);
+                float distortx = tex2D(_NoiseTex, (i.worldPos.xz * _Scale) + (_Time.x * 2)).r;
+                half4 col = tex2D(_MainTex, (i.worldPos.xz * _Scale) - (distortx * _TextureDistort));
                 half depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(i.srcPos)));
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
@@ -110,13 +123,19 @@ Shader "Saltsuica/InteractWater"
                 half4 foamLine = 1-saturate(_Foam * (depth - i.srcPos.w));
                 float3 ambient = ShadeSH9(float4(i.normal, 1));
                 col *= _LightColor0; //改用直接光照，不再自定义颜色
-                col += (step(0.4 * 1,foamLine) * _FoamC); // add the foam line and tint to the texture
+
+                float2 uv = i.worldPos.xz - _Position.xz;
+                uv = uv / (_OrthographicCamSize * 2);
+                uv += 0.5;
+                float ripples = tex2D(_GlobalEffectRT, uv).b;
+                ripples = step(0.99, ripples * 2);
+                distortx += (ripples * 2);
+
+                col += (step(0.4 * distortx, foamLine) *_FoamC);
                 // TODO: foamline 应该根据直接光照的颜色亮度计算明暗
                 col += foamLine;
-                // col += float4(ambient, 1);
 
-                // return float4(ambient, 1);
-                return col;
+                return col + ripples;
             }
             ENDCG
         }
