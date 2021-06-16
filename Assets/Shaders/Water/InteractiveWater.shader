@@ -135,7 +135,7 @@ Shader "Saltsuica/InteractWater"
                 // TODO: foamline 应该根据直接光照的颜色亮度计算明暗
                 col += foamLine;
 
-                return col + ripples;
+                return col + ripples * _LightColor0;
             }
             ENDCG
         }
