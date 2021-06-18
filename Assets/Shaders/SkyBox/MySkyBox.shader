@@ -2,10 +2,12 @@ Shader "Saltsuica/MySkyBox"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+
+        _BaseNoise("Base Noise", 2D) = "" {}
+        _BaseNoiseScale("Base Noise Scale", Range(0, 1)) = 0.2
 
         [Header(Sun Settings)]
-		 _SunColor("Sun Color", Color) = (1,1,1,1)
+        _SunColor("Sun Color", Color) = (1,1,1,1)
 		_SunRadius("Sun Radius",  Range(0, 2)) = 0.1
 
         [Header(Moon Settings)]
@@ -23,6 +25,11 @@ Shader "Saltsuica/MySkyBox"
         _NightTopColor("Night Top Color", Color) = (1,1,1,1)
         _NightBottomColor("Night Bottom Color", Color) = (1,1,1,1)
 
+        [Header(Stars Settings)]
+        _StarsTex ("_Stars", 2D) = "white" {}
+        _StarsCutoff("Stars Cutoff", Range(0, 1)) = 0.1
+        _StarsSkyColor("Stars Sky Color", Color) = (0.0,0.2,0.1,1)
+        _StarsScale("Stars Scale", Range(0, 1)) = 0.5
 
         [Header(Horizon Settings)]
         _HorizonColorDay("Horizon Day Color", Color) = (1,1,1,1)
@@ -58,10 +65,13 @@ Shader "Saltsuica/MySkyBox"
                 float3 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
+                float3 worldPos : TEXCOORD1;
             };
 
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
+            sampler2D _StarsTex;
+            sampler2D _BaseNoise;
+            float _BaseNoiseScale;
+            float _StarsCutoff;
 
             float4 _SunColor;
             float _SunRadius;
@@ -80,6 +90,8 @@ Shader "Saltsuica/MySkyBox"
             float4 _SunSetColor;
             float _HorizonIntensity;
             float _HorizonOffset;
+            float4 _StarsSkyColor;
+            float _StarsScale;
 
 
             v2f vert (appdata v)
@@ -87,6 +99,7 @@ Shader "Saltsuica/MySkyBox"
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = v.uv;
+                o.worldPos = mul(unity_ObjectToWorld, v.vertex);
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
@@ -96,33 +109,36 @@ Shader "Saltsuica/MySkyBox"
 
                 // get horizon :  close to 0 mean close to horizon
                 float horizon = abs((i.uv.y * _HorizonIntensity) - _HorizonOffset);
+                
+                // common
+                float2 skyUV = i.worldPos.xz / i.worldPos.y;
+                float baseNoise = tex2D(_BaseNoise, (skyUV - _Time.x) * _BaseNoiseScale).x;
 
                 float sunDist = distance(i.uv.xyz, _WorldSpaceLightPos0);
                 float moonDist = distance(i.uv.xyz, -_WorldSpaceLightPos0);
-                // float sun = 1 - saturate(sunDist / _SunRadius);
                 float sun  = 1 - (sunDist / _SunRadius);
                 sun = saturate(sun * 50);
-                // fuzzy color for moon
-                // float moon = 1 - saturate(moonDist / _MoonRadius);
-                // solid moon color
-                // float moon = 1- step(_MoonRadius, moonDist);
+
                 float moon = 1 - (moonDist / _MoonRadius);
                 moon = saturate(moon * 50);
                 float crescentMoonDist = distance(float3(i.uv.x + _MoonOffset, i.uv.yz), -_WorldSpaceLightPos0);
 
-                
-                // float crescentMoon = 1 - step(_MoonRadius, crescentMoonDist);
                 float crescentMoon = 1 - (crescentMoonDist / _MoonRadius);
                 crescentMoon = saturate(crescentMoon * 30);
                 moon = saturate(moon - crescentMoon);
                 float3 sunAndMoon = (sun * _SunColor) + (moon * _MoonColor);
+
+                // star
+                float3 stars = tex2D(_StarsTex, (skyUV + _Time.x) * _StarsScale);
+                stars *= saturate(-_WorldSpaceLightPos0.y); // make sure start only appear at night
+                stars = step(_StarsCutoff, stars);
+                stars += (baseNoise * _StarsSkyColor);
 
                 // gradient sky color
                 float3 gradientDay = lerp(_DayBottomColor, _DayTopColor, saturate(i.uv.y));
                 float3 gradientNight = lerp(_NightBottomColor, _NightTopColor, saturate(i.uv.y));
                 float3 skyGradient = lerp(gradientNight, gradientDay, saturate(_WorldSpaceLightPos0.y));
 
-                
                 // sun set /rise /horizon glow
                 //TODO: what is horizon glow
                 // get horizonDay color
@@ -135,7 +151,7 @@ Shader "Saltsuica/MySkyBox"
                 float3 sunsetColor = sunset * _SunSetColor;
 
                 float3 combined = float3(0, 0, 0);
-                combined += sunAndMoon + skyGradient;
+                combined += sunAndMoon + skyGradient + stars;
                 // combined += sunAndMoon + skyGradient;
                 // return float4(_WorldSpaceLightPos0.xyz, 1);
                 // return float4(horizonGlow, horizonGlow, horizonGlow, 1);
