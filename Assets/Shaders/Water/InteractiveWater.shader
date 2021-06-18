@@ -121,8 +121,10 @@ Shader "Saltsuica/InteractWater"
 
                 //for foamline
                 half4 foamLine = 1-saturate(_Foam * (depth - i.srcPos.w));
-                float3 ambient = ShadeSH9(float4(i.normal, 1));
-                col *= _LightColor0; //改用直接光照，不再自定义颜色
+                // float3 ambient = ShadeSH9(float4(i.normal, 1));
+                //TODO: use NdotL
+                float NdotL = saturate(dot(i.normal, _WorldSpaceLightPos0));
+                col *= _LightColor0 * NdotL; //改用直接光照，不再自定义颜色
 
                 float2 uv = i.worldPos.xz - _Position.xz;
                 uv = uv / (_OrthographicCamSize * 2);

@@ -81,15 +81,15 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _Height: 0.194
+    - _Height: 0.063
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _Scale: 0.306
+    - _Scale: 0.31
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
-    - _Speed: 0.987
+    - _Speed: 0.942
     - _SrcBlend: 1
     - _TessellationUniform: 1
     - _UVSec: 0

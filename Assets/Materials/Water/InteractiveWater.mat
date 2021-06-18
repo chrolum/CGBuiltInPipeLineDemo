@@ -65,7 +65,7 @@ Material:
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _Foam: 5.53
+    - _Foam: 0.31
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -79,8 +79,8 @@ Material:
     - _SpecularHighlights: 1
     - _Speed: 0.5
     - _SrcBlend: 1
-    - _TessellationUniform: 1
-    - _TextureDistort: 0.048
+    - _TessellationUniform: 2.8
+    - _TextureDistort: 0.02
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:

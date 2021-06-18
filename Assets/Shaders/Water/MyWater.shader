@@ -3,6 +3,7 @@ Shader "Unlit/MyWater"
     Properties
     {
         _Color("Tint", Color) = (1, 1, 1, .5)//discard
+        _MoonColor("Moon light color", Color) = (1,1,1,1)
         _FoamC("Foam", Color) = (1, 1, 1, .5)
         _MainTex ("Texture", 2D) = "white" {}
 
@@ -67,6 +68,7 @@ Shader "Unlit/MyWater"
             float4 _MainTex_ST;
 
             float4 _Color;
+            float4 _MoonColor;
             sampler2D _CameraDepthTexture;
             float _Scale;
 
@@ -103,17 +105,18 @@ Shader "Unlit/MyWater"
                 // sample the texture
                 half4 col = tex2D(_MainTex, i.worldPos.xz * _Scale);
                 half depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(i.srcPos)));
-                // apply fog
-                UNITY_APPLY_FOG(i.fogCoord, col);
-
+                
                 //for foamline
                 half4 foamLine = 1-saturate(_Foam * (depth - i.srcPos.w));
                 float3 ambient = ShadeSH9(float4(i.normal, 1));
-                col *= _LightColor0; //改用直接光照，不再自定义颜色
+                float NdotLSun = saturate(dot(i.normal, _WorldSpaceLightPos0));
+                float NdotLMoon = saturate(dot(i.normal, -_WorldSpaceLightPos0));
+                float4 lightColor = NdotLSun * _LightColor0 + NdotLMoon * _MoonColor;
+
+                col *= lightColor; //改用直接光照，不再自定义颜色
                 col += (step(0.4 * 1,foamLine) * _FoamC); // add the foam line and tint to the texture
                 // TODO: foamline 应该根据直接光照的颜色亮度计算明暗
                 col += foamLine;
-                // col += float4(ambient, 1);
 
                 // return float4(ambient, 1);
                 return col;
