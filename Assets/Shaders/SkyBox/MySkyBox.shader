@@ -30,12 +30,24 @@ Shader "Saltsuica/MySkyBox"
         _StarsCutoff("Stars Cutoff", Range(0, 1)) = 0.1
         _StarsSkyColor("Stars Sky Color", Color) = (0.0,0.2,0.1,1)
         _StarsScale("Stars Scale", Range(0, 1)) = 0.5
+        _StarsSpeed("Stars Speed", Range(0, 1)) = 0.5
 
         [Header(Horizon Settings)]
         _HorizonColorDay("Horizon Day Color", Color) = (1,1,1,1)
         _HorizonColorNight("Horizon Night Color", Color) = (1,1,1,1)
         _HorizonIntensity("HorizonIntensity", range(0, 20)) = 0.1
         _HorizonOffset("HorizonOffset", range(-1, 1)) = 0.1
+
+        [Header(Cloud Settings)]
+        _CloudScrollSpeed("Cloud Scroll Speed", Range(0, 10)) = 1.4
+        _DistortTex("Cloud Distort Noise", 2D) = "" {}
+        _SecNoiseTex("Second Noise", 2D) = "" {}
+        _DistortScale("Distort Noise Scale",  Range(0, 1)) = 0.06
+		_SecNoiseScale("Secondary Noise Scale",  Range(0, 1)) = 0.05
+		_Distortion("Extra Distortion",  Range(0, 1)) = 0.1
+        _CloudCutoff("Cloud Cut Off", Range(0,1)) = 0.3
+
+
         
     }
     SubShader
@@ -70,6 +82,8 @@ Shader "Saltsuica/MySkyBox"
 
             sampler2D _StarsTex;
             sampler2D _BaseNoise;
+            sampler2D _DistortTex;
+            sampler2D _SecNoiseTex;
             float _BaseNoiseScale;
             float _StarsCutoff;
 
@@ -92,6 +106,12 @@ Shader "Saltsuica/MySkyBox"
             float _HorizonOffset;
             float4 _StarsSkyColor;
             float _StarsScale;
+            float _StarsSpeed;
+
+            float _DistortScale;
+            float _Distortion;
+            float _SecNoiseScale;
+            float _CloudScrollSpeed;
 
 
             v2f vert (appdata v)
@@ -114,10 +134,11 @@ Shader "Saltsuica/MySkyBox"
                 float2 skyUV = i.worldPos.xz / i.worldPos.y;
                 float baseNoise = tex2D(_BaseNoise, (skyUV - _Time.x) * _BaseNoiseScale).x;
 
+                //TODO : 太阳颜色应该随着太阳高度角而变化
                 float sunDist = distance(i.uv.xyz, _WorldSpaceLightPos0);
                 float moonDist = distance(i.uv.xyz, -_WorldSpaceLightPos0);
-                float sun  = 1 - (sunDist / _SunRadius);
-                sun = saturate(sun * 50);
+                float sun  = 1 - saturate(sunDist / _SunRadius);
+                // sun = saturate(sun * 50);
 
                 float moon = 1 - (moonDist / _MoonRadius);
                 moon = saturate(moon * 50);
@@ -129,10 +150,18 @@ Shader "Saltsuica/MySkyBox"
                 float3 sunAndMoon = (sun * _SunColor) + (moon * _MoonColor);
 
                 // star
-                float3 stars = tex2D(_StarsTex, (skyUV + _Time.x) * _StarsScale);
+                float3 stars = tex2D(_StarsTex, (skyUV + _Time.x * _StarsSpeed));
                 stars *= saturate(-_WorldSpaceLightPos0.y); // make sure start only appear at night
                 stars = step(_StarsCutoff, stars);
                 stars += (baseNoise * _StarsSkyColor);
+
+                //cloud
+                float noise1 = tex2D(_DistortTex, (skyUV + baseNoise) - (_Time.x * _CloudScrollSpeed)* _DistortScale);
+                float noise2 = tex2D(_SecNoiseTex, (skyUV + (noise1 * _Distortion) -(_Time.x * _CloudScrollSpeed * 0.5)) * _SecNoiseScale);
+                float finalNoise = saturate(noise1 * noise2) * 2 * saturate(i.worldPos.y);
+
+				float clouds = saturate(smoothstep(_CloudCutoff, _CloudCutoff + _Fuzziness, finalNoise));
+				float cloudsunder = saturate(smoothstep(_CloudCutoff, _CloudCutoff + _Fuzziness + _FuzzinessUnder , noise2) * clouds);
 
                 // gradient sky color
                 float3 gradientDay = lerp(_DayBottomColor, _DayTopColor, saturate(i.uv.y));
@@ -156,7 +185,8 @@ Shader "Saltsuica/MySkyBox"
                 // return float4(_WorldSpaceLightPos0.xyz, 1);
                 // return float4(horizonGlow, horizonGlow, horizonGlow, 1);
                 UNITY_APPLY_FOG(i.fogCoord, combined);
-                return float4(combined, 1);
+                return float4(finalNoise, finalNoise, finalNoise, 1);
+                // return float4(combined, 1);
 
             }
             ENDCG
