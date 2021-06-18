@@ -171,10 +171,10 @@ Shader "Unlit/SkyboxProc"
 				stars *= cloudsNegative;
 
 				// gradient day sky
-				float3 gradientDay = lerp(_DayBottomColor, _DayTopColor, saturate(horizon));
+				float3 gradientDay = lerp(_DayBottomColor, _DayTopColor, saturate(i.uv.y));
 
 				// gradient night sky
-				float3 gradientNight = lerp(_NightBottomColor, _NightTopColor, saturate(horizon));
+				float3 gradientNight = lerp(_NightBottomColor, _NightTopColor, saturate(i.uv.y));
 
 				float3 skyGradients = lerp(gradientNight, gradientDay, saturate(_WorldSpaceLightPos0.y)) * cloudsNegative;
 

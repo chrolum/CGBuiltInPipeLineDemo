@@ -113,13 +113,13 @@ Shader "Saltsuica/MySkyBox"
                 
                 // float crescentMoon = 1 - step(_MoonRadius, crescentMoonDist);
                 float crescentMoon = 1 - (crescentMoonDist / _MoonRadius);
-                crescentMoon = saturate(crescentMoon * 50);
+                crescentMoon = saturate(crescentMoon * 30);
                 moon = saturate(moon - crescentMoon);
                 float3 sunAndMoon = (sun * _SunColor) + (moon * _MoonColor);
 
                 // gradient sky color
-                float3 gradientDay = lerp(_DayBottomColor, _DayTopColor, saturate(horizon));
-                float3 gradientNight = lerp(_NightBottomColor, _NightTopColor, saturate(horizon));
+                float3 gradientDay = lerp(_DayBottomColor, _DayTopColor, saturate(i.uv.y));
+                float3 gradientNight = lerp(_NightBottomColor, _NightTopColor, saturate(i.uv.y));
                 float3 skyGradient = lerp(gradientNight, gradientDay, saturate(_WorldSpaceLightPos0.y));
 
                 
@@ -135,7 +135,8 @@ Shader "Saltsuica/MySkyBox"
                 float3 sunsetColor = sunset * _SunSetColor;
 
                 float3 combined = float3(0, 0, 0);
-                combined += sunAndMoon + skyGradient + horizonGlow + sunsetColor;
+                combined += sunAndMoon + skyGradient;
+                // combined += sunAndMoon + skyGradient;
                 // return float4(_WorldSpaceLightPos0.xyz, 1);
                 // return float4(horizonGlow, horizonGlow, horizonGlow, 1);
                 UNITY_APPLY_FOG(i.fogCoord, combined);
