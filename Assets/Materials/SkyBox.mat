@@ -82,20 +82,20 @@ Material:
     m_Floats:
     - _BaseNoiseScale: 0.178
     - _BumpScale: 1
-    - _CloudCutoff: 0.716
+    - _CloudCutoff: 0.455
     - _CloudScrollSpeed: 3.28
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DistortScale: 0.425
     - _Distortion: 0.155
     - _DstBlend: 0
-    - _Fuzziness: 0.439
+    - _Fuzziness: 0.423
     - _FuzzinessUnder: 0.366
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _HorizonIntensity: 5.44
-    - _HorizonOffset: 0.146
+    - _HorizonIntensity: 2
+    - _HorizonOffset: 0
     - _Metallic: 0
     - _Mode: 0
     - _MoonOffset: 0.06
@@ -106,7 +106,7 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _StarsCutoff: 0.093
+    - _StarsCutoff: 0.067
     - _StarsScale: 1
     - _StarsSpeed: 0.08
     - _SunRadius: 0.103
@@ -120,13 +120,13 @@ Material:
     - _DayBottomColor: {r: 0.41117835, g: 0.8301887, b: 0.64290375, a: 1}
     - _DayTopColor: {r: 0.58431375, g: 0.68223983, b: 0.93333334, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _HorizonColorDay: {r: 0.9528302, g: 0.7070944, b: 0.5887772, a: 1}
+    - _HorizonColorDay: {r: 0.5377358, g: 0.24506395, b: 0.22067462, a: 1}
     - _HorizonColorNight: {r: 0.04160734, g: 0.13515297, b: 0.5188679, a: 1}
     - _MoonColor: {r: 1, g: 0.9701609, b: 0.5801887, a: 1}
     - _NightBottomColor: {r: 0.008098972, g: 0.051183492, b: 0.24528301, a: 1}
     - _NightTopColor: {r: 0, g: 0, b: 0, a: 1}
     - _StarsSkyColor: {r: 0.02193842, g: 0.16037738, b: 0.092515156, a: 1}
     - _SunColor: {r: 1, g: 0.9309381, b: 0.8066038, a: 1}
-    - _SunSetColor: {r: 0.7647059, g: 0.3072621, b: 0.10588235, a: 1}
+    - _SunSetColor: {r: 1, g: 0.30084747, b: 0, a: 1}
     - __HorizonColorDay: {r: 1, g: 0.042452812, b: 0.042452812, a: 1}
   m_BuildTextureStacks: []

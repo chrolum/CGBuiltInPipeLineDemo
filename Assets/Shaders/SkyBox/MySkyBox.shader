@@ -136,6 +136,10 @@ Shader "Saltsuica/MySkyBox"
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
+            float parabola( float x, float k )
+            {
+                return pow( 4.0*x*(1.0-x), k );
+            }
 
             fixed4 frag (v2f i) : SV_Target
             {
@@ -176,12 +180,12 @@ Shader "Saltsuica/MySkyBox"
                 // sun set /rise /horizon glow
                 //TODO: what is horizon glow
                 // get horizonDay color
-                float3 horizonGlow = saturate((1-horizon * 5) * saturate(_WorldSpaceLightPos0.y * 10)) * _HorizonColorDay;
-                float3 horizonGlowNight = saturate((1-horizon * 5) * saturate(-_WorldSpaceLightPos0.y * 10)) * _HorizonColorNight;
-                horizonGlow += horizonGlowNight;
+				float3 horizonGlow = saturate((1 - horizon * 5) * saturate(_WorldSpaceLightPos0.y * 10)) * _HorizonColorDay;// 
+				float3 horizonGlowNight = saturate((1 - horizon * 5) * saturate(-_WorldSpaceLightPos0.y * 10)) * _HorizonColorNight;//
+				horizonGlow += horizonGlowNight;
 
                 // for sun set
-                float sunset = saturate((1-horizon)) * saturate(_WorldSpaceLightPos0.y * 5);
+                float sunset = saturate((1 - horizon)) * saturate(parabola(_WorldSpaceLightPos0.y * 2, 1.0));
                 float3 sunsetColor = sunset * _SunSetColor;
 
                 //cloud
@@ -202,11 +206,12 @@ Shader "Saltsuica/MySkyBox"
                 float3 combined = float3(0, 0, 0);
                 sunAndMoon *= cloudsNagetive;
                 stars *= cloudsNagetive;
-                combined += sunAndMoon + skyGradient + stars + cloudsColor;
+                combined += sunAndMoon + skyGradient + stars + cloudsColor + sunsetColor;
                 // combined += sunAndMoon + skyGradient;
                 // return float4(_WorldSpaceLightPos0.xyz, 1);
                 // return float4(horizonGlow, horizonGlow, horizonGlow, 1); 
                 UNITY_APPLY_FOG(i.fogCoord, combined);
+                // return float4(sunset, sunset, sunset, 1);
                 return float4(combined, 1);
                 return float4(clouds, clouds, clouds, 1);
                 // return float4(combined, 1);

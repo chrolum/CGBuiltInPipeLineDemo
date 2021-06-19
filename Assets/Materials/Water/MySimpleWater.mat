@@ -86,7 +86,7 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _Scale: 0.09
+    - _Scale: 0.241
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _Speed: 0.942
@@ -98,5 +98,5 @@ Material:
     - _Color: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _FoamC: {r: 1, g: 1, b: 1, a: 1}
-    - _MoonColor: {r: 0.38715827, g: 0.19708972, b: 0.9716981, a: 1}
+    - _MoonColor: {r: 0.22040421, g: 0.18752226, b: 0.8113208, a: 1}
   m_BuildTextureStacks: []
