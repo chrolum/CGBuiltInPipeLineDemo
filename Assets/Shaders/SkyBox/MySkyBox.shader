@@ -46,7 +46,13 @@ Shader "Saltsuica/MySkyBox"
 		_SecNoiseScale("Secondary Noise Scale",  Range(0, 1)) = 0.05
 		_Distortion("Extra Distortion",  Range(0, 1)) = 0.1
         _CloudCutoff("Cloud Cut Off", Range(0,1)) = 0.3
+        _Fuzziness("Fuzziness", Range(0, 1)) = 0.3
+        _FuzzinessUnder("FuzzinessUnder", Range(0, 1)) = 0.3
 
+        [Header(CloudDay Settings)]
+        _CloudColorDayEdge("Day Edge", Color) = (1,1,1,1)
+        _CloudColorDayMain("Day Main", Color) = (1,1,1,1)
+        _CloudColorNightMain("Night Main", Color) = (1,1,1,1)
 
         
     }
@@ -112,6 +118,13 @@ Shader "Saltsuica/MySkyBox"
             float _Distortion;
             float _SecNoiseScale;
             float _CloudScrollSpeed;
+            float _CloudCutoff;
+            float _Fuzziness;
+            float _FuzzinessUnder;
+
+            float4 _CloudColorDayEdge;
+            float4 _CloudColorDayMain;
+            float4 _CloudColorNightMain;
 
 
             v2f vert (appdata v)
@@ -155,14 +168,6 @@ Shader "Saltsuica/MySkyBox"
                 stars = step(_StarsCutoff, stars);
                 stars += (baseNoise * _StarsSkyColor);
 
-                //cloud
-                float noise1 = tex2D(_DistortTex, (skyUV + baseNoise) - (_Time.x * _CloudScrollSpeed)* _DistortScale);
-                float noise2 = tex2D(_SecNoiseTex, (skyUV + (noise1 * _Distortion) -(_Time.x * _CloudScrollSpeed * 0.5)) * _SecNoiseScale);
-                float finalNoise = saturate(noise1 * noise2) * 2 * saturate(i.worldPos.y);
-
-				float clouds = saturate(smoothstep(_CloudCutoff, _CloudCutoff + _Fuzziness, finalNoise));
-				float cloudsunder = saturate(smoothstep(_CloudCutoff, _CloudCutoff + _Fuzziness + _FuzzinessUnder , noise2) * clouds);
-
                 // gradient sky color
                 float3 gradientDay = lerp(_DayBottomColor, _DayTopColor, saturate(i.uv.y));
                 float3 gradientNight = lerp(_NightBottomColor, _NightTopColor, saturate(i.uv.y));
@@ -179,13 +184,31 @@ Shader "Saltsuica/MySkyBox"
                 float sunset = saturate((1-horizon)) * saturate(_WorldSpaceLightPos0.y * 5);
                 float3 sunsetColor = sunset * _SunSetColor;
 
+                //cloud
+                float noise1 = tex2D(_DistortTex, ((skyUV + baseNoise) - (_Time.x * _CloudScrollSpeed)) * _DistortScale);
+                float noise2 = tex2D(_SecNoiseTex, (skyUV + (noise1 * _Distortion) -(_Time.x * _CloudScrollSpeed * 0.5)) * _SecNoiseScale);
+                float finalNoise = saturate(noise1 * noise2) * 2.3 * saturate(i.worldPos.y);
+
+				float clouds = saturate(smoothstep(_CloudCutoff, _CloudCutoff + _Fuzziness, finalNoise));
+                float cloudsNagetive = 1 - clouds;
+
+				float cloudsunder = saturate(smoothstep(_CloudCutoff, _CloudCutoff + _Fuzziness + _FuzzinessUnder , noise2) * clouds);
+
+                float4 cloudDayColor = lerp(float4(skyGradient, 1), _CloudColorDayMain, clouds) * clouds; // mul clouds only the cloud will show color
+                float4 cloudNightColor = lerp(float4(skyGradient, 1), _CloudColorNightMain, clouds) * clouds;
+
+                float4 cloudsColor = lerp(cloudNightColor, cloudDayColor, saturate(_WorldSpaceLightPos0.y));
+
                 float3 combined = float3(0, 0, 0);
-                combined += sunAndMoon + skyGradient + stars;
+                sunAndMoon *= cloudsNagetive;
+                stars *= cloudsNagetive;
+                combined += sunAndMoon + skyGradient + stars + cloudsColor;
                 // combined += sunAndMoon + skyGradient;
                 // return float4(_WorldSpaceLightPos0.xyz, 1);
-                // return float4(horizonGlow, horizonGlow, horizonGlow, 1);
+                // return float4(horizonGlow, horizonGlow, horizonGlow, 1); 
                 UNITY_APPLY_FOG(i.fogCoord, combined);
-                return float4(finalNoise, finalNoise, finalNoise, 1);
+                return float4(combined, 1);
+                return float4(clouds, clouds, clouds, 1);
                 // return float4(combined, 1);
 
             }
