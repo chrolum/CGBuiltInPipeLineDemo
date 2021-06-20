@@ -9,6 +9,7 @@ Shader "Saltsuica/MySkyBox"
         [Header(Sun Settings)]
         _SunColor("Sun Color", Color) = (1,1,1,1)
 		_SunRadius("Sun Radius",  Range(0, 2)) = 0.1
+        _VerticalOffset("Vertical offset", Range(-2, 2)) = 0
 
         [Header(Moon Settings)]
         _MoonColor("Moon Color", Color) = (1,1,1,1)
@@ -126,6 +127,8 @@ Shader "Saltsuica/MySkyBox"
             float4 _CloudColorDayMain;
             float4 _CloudColorNightMain;
 
+            float _VerticalOffset;
+
 
             v2f vert (appdata v)
             {
@@ -152,14 +155,28 @@ Shader "Saltsuica/MySkyBox"
                 float baseNoise = tex2D(_BaseNoise, (skyUV - _Time.x) * _BaseNoiseScale).x;
 
                 //TODO : 太阳颜色应该随着太阳高度角而变化
-                float sunDist = distance(i.uv.xyz, _WorldSpaceLightPos0);
-                float moonDist = distance(i.uv.xyz, -_WorldSpaceLightPos0);
+                float3 celestialDir = float3(i.uv.x, i.uv.y+_VerticalOffset, i.uv.z);
+                // float3 celestialDir1 = float3(i.uv.x-0.2, i.uv.y+_VerticalOffset, i.uv.z);
+                // float3 celestialDir2 = float3(i.uv.x+0.2, i.uv.y+_VerticalOffset, i.uv.z);
+                // float3 celestialDir3 = float3(i.uv.x+0.4, i.uv.y+_VerticalOffset, i.uv.z);
+                celestialDir = normalize(celestialDir);//不归一化天体会变形
+                float sunDist = distance(celestialDir, _WorldSpaceLightPos0);
+                float moonDist = distance(celestialDir, -_WorldSpaceLightPos0);
                 float sun  = 1 - saturate(sunDist / _SunRadius);
+
+                // 四日凌空的沙雕东西
+                // float sunDist2 = distance(normalize(celestialDir1), _WorldSpaceLightPos0);
+                // float sun2 = 1 - saturate(sunDist2 / _SunRadius);
+                // float sunDist3 = distance(normalize(celestialDir2), _WorldSpaceLightPos0);
+                // float sun3 = 1 - saturate(sunDist3 / _SunRadius);
+                // float sunDist4 = distance(normalize(celestialDir3), _WorldSpaceLightPos0);
+                // float sun4 = 1 - saturate(sunDist4 / _SunRadius);
+
                 // sun = saturate(sun * 50);
 
                 float moon = 1 - (moonDist / _MoonRadius);
                 moon = saturate(moon * 50);
-                float crescentMoonDist = distance(float3(i.uv.x + _MoonOffset, i.uv.yz), -_WorldSpaceLightPos0);
+                float crescentMoonDist = distance(float3(celestialDir.x + _MoonOffset, celestialDir.yz), -_WorldSpaceLightPos0);
 
                 float crescentMoon = 1 - (crescentMoonDist / _MoonRadius);
                 crescentMoon = saturate(crescentMoon * 30);
@@ -180,8 +197,8 @@ Shader "Saltsuica/MySkyBox"
                 // sun set /rise /horizon glow
                 //TODO: what is horizon glow
                 // get horizonDay color
-				float3 horizonGlow = saturate((1 - horizon * 5) * saturate(_WorldSpaceLightPos0.y * 10)) * _HorizonColorDay;// 
-				float3 horizonGlowNight = saturate((1 - horizon * 5) * saturate(-_WorldSpaceLightPos0.y * 10)) * _HorizonColorNight;//
+				float3 horizonGlow = saturate((1 - horizon * 5) * saturate(parabola(_WorldSpaceLightPos0.y * 5, 1.0))) * _HorizonColorDay;// 
+				float3 horizonGlowNight = saturate((1 - horizon * 5) * saturate(parabola(-_WorldSpaceLightPos0.y * 4, 1.0))) * _HorizonColorNight;//
 				horizonGlow += horizonGlowNight;
 
                 // for sun set
@@ -206,15 +223,11 @@ Shader "Saltsuica/MySkyBox"
                 float3 combined = float3(0, 0, 0);
                 sunAndMoon *= cloudsNagetive;
                 stars *= cloudsNagetive;
-                combined += sunAndMoon + skyGradient + stars + cloudsColor + sunsetColor;
-                // combined += sunAndMoon + skyGradient;
-                // return float4(_WorldSpaceLightPos0.xyz, 1);
-                // return float4(horizonGlow, horizonGlow, horizonGlow, 1); 
+                combined += sunAndMoon + skyGradient + stars + cloudsColor + sunsetColor + horizonGlow;
                 UNITY_APPLY_FOG(i.fogCoord, combined);
-                // return float4(sunset, sunset, sunset, 1);
+                // return float4(sun2, sun2, sun2, 1);
+                // return float4(horizonGlow, 1);
                 return float4(combined, 1);
-                return float4(clouds, clouds, clouds, 1);
-                // return float4(combined, 1);
 
             }
             ENDCG
