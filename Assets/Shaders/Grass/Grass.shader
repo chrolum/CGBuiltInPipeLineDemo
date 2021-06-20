@@ -237,9 +237,9 @@ Shader "Saltsuica/Grass"
 
 				float3 ambient = ShadeSH9(float4(normal, 1));
 				float4 lightIntensity = NdotL * _LightColor0 + float4(ambient, 1);
-				float4 col = lerp(_BottomColor, _TopColor * lightIntensity, i.uv.y);
+				float4 col = lerp(_BottomColor, _TopColor, i.uv.y);
 
-				return col;
+				return col * lightIntensity;
 				// return visibility;
 				// return visibility * lerp(_BottomColor, _TopColor, i.uv.y);
 				// return lerp(_BottomColor, _TopColor, i.uv.y); //定义一个底部颜色和顶部颜色，更具uv的v来线性插值出颜色
