@@ -1,4 +1,4 @@
-Shader "Saltsuica/MySkyBox"
+Shader "Saltsuica/MySkybox"
 {
     Properties
     {
@@ -195,8 +195,6 @@ Shader "Saltsuica/MySkyBox"
                 float3 skyGradient = lerp(gradientNight, gradientDay, saturate(_WorldSpaceLightPos0.y));
 
                 // sun set /rise /horizon glow
-                //TODO: what is horizon glow
-                // get horizonDay color
 				float3 horizonGlow = saturate((1 - horizon * 5) * saturate(parabola(_WorldSpaceLightPos0.y * 5, 1.0))) * _HorizonColorDay;// 
 				float3 horizonGlowNight = saturate((1 - horizon * 5) * saturate(parabola(-_WorldSpaceLightPos0.y * 4, 1.0))) * _HorizonColorNight;//
 				horizonGlow += horizonGlowNight;

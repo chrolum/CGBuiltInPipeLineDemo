@@ -82,7 +82,7 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _TessellationUniform: 7.1
-    - _TranslucentGain: 0.513
+    - _TranslucentGain: 0.229
     - _UVSec: 0
     - _WindStrength: 0.21
     - _ZWrite: 1
