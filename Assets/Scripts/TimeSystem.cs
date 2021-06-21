@@ -7,6 +7,7 @@ public class TimeSystem : MonoBehaviour
     public Transform Sun;
 
     public float Speed;
+    public float prevSpeed;
     public float beginTimeStamp;
 
     // pre load area
@@ -14,11 +15,24 @@ public class TimeSystem : MonoBehaviour
 
     private void Awake() {
         beginTimeStamp = Time.time;
+        prevSpeed = Speed;
     }
 
     private void Update() {
         quatSun = Quaternion.AngleAxis(Speed, Vector3.right);
         Sun.rotation = Sun.rotation * quatSun;
 
+    }
+
+    public void StartSpeedUp()
+    {
+        Debug.Log("start speed up");
+        prevSpeed = Speed;
+        Speed = 0.5f;
+    }
+
+    public void StopSpeedUp()
+    {
+        Speed = prevSpeed;
     }
 }
