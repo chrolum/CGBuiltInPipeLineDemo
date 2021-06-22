@@ -2,7 +2,14 @@ Shader "Saltsuica/MySnow"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+        [Header(Snow setting)]
+        _SnowNoise("Snow Noise", 2D) = "" {}
+        _SnowNoiseScale("Snow Noise Scale", Range(0, 2)) = 0.1
+        _SnowHeight("Snow Height", Range(0, 5)) = 1
+        _SnowNoiseWeight("Noise Weight", Range(0, 1)) = 0.1
+
+        _SnowDepth("Snow Depth", Range(0, 10)) = 0.5
+        _SnowInteractRadius("Interactive radius", Range(0, 5)) = 1
     }
     SubShader
     {
@@ -19,39 +26,49 @@ Shader "Saltsuica/MySnow"
 
             #include "UnityCG.cginc"
 
-            struct appdata
-            {
-                float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
-            };
+            // snow base
+            sampler2D _SnowNoise;
+            float _SnowHeight; 
+            float _SnowNoiseScale;
+            float _SnowNoiseWeight;
+            float _SnowDepth;
+
+            // snow trail
+            uniform float3 _PlayerPos;
+            float _SnowInteractRadius;
+
 
             struct v2f
             {
-                float2 uv : TEXCOORD0;
-                UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
+                float4 color : COLOR0;
             };
 
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
-
-            v2f vert (appdata v)
+            v2f vert(appdata_full v)
             {
                 v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                UNITY_TRANSFER_FOG(o,o.vertex);
+                float3 worldPos = mul(unity_ObjectToWorld, v.vertex);
+                float snowNoise = tex2Dlod(_SnowNoise, float4(worldPos.xz * _SnowNoiseScale, 0,0));
+
+                o.color = v.color;
+                o.vertex = v.vertex;
+
+                // basic snow Bump
+                o.vertex.xyz += normalize(v.normal) * _SnowHeight + snowNoise * _SnowNoiseWeight;
+
+                // snow Snow marks
+                float dis = distance(_PlayerPos.xz, worldPos.xz);
+                float radius = 1 - saturate(dis / _SnowInteractRadius);
+                o.vertex.xyz -= normalize(v.normal) * _SnowDepth * radius;
+                o.vertex = UnityObjectToClipPos(o.vertex);
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            fixed4 frag(appdata_full i) : SV_TARGET
             {
-                // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv);
-                // apply fog
-                UNITY_APPLY_FOG(i.fogCoord, col);
-                return col;
+                return float4(1,1,1,1);
             }
+
             ENDCG
         }
     }
