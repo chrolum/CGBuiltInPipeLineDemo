@@ -34,8 +34,12 @@ Shader "Saltsuica/MySnow"
             float _SnowDepth;
 
             // snow trail
-            uniform float3 _PlayerPos;
             float _SnowInteractRadius;
+
+            uniform float3 _Position;
+            uniform sampler2D _GlobalEffectRT;
+            uniform float _OrthographicCamSize;
+
 
 
             struct v2f
@@ -53,13 +57,20 @@ Shader "Saltsuica/MySnow"
                 o.color = v.color;
                 o.vertex = v.vertex;
 
+                float2 uv = worldPos.xz - _Position.xz; // render-texture的uv坐标
+                uv = uv / (_OrthographicCamSize * 2);
+                uv += 0.5;
+
+                float4 RTEffect = tex2Dlod(_GlobalEffectRT, float4(uv, 0, 0));
+
                 // basic snow Bump
                 o.vertex.xyz += normalize(v.normal) * _SnowHeight + snowNoise * _SnowNoiseWeight;
 
                 // snow Snow marks
-                float dis = distance(_PlayerPos.xz, worldPos.xz);
+                float dis = distance(_Position.xz, worldPos.xz);
                 float radius = 1 - saturate(dis / _SnowInteractRadius);
-                o.vertex.xyz -= normalize(v.normal) * _SnowDepth * radius;
+                // o.vertex.xyz -= normalize(v.normal) * _SnowDepth * radius;
+                o.vertex.xyz -= normalize(v.normal) * RTEffect.g * _SnowDepth;
                 o.vertex = UnityObjectToClipPos(o.vertex);
                 return o;
             }
