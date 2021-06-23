@@ -10,6 +10,10 @@ Shader "Saltsuica/MySnow"
 
         _SnowDepth("Snow Depth", Range(0, 10)) = 0.5
         _SnowInteractRadius("Interactive radius", Range(0, 5)) = 1
+
+        [Header(Tess setting)]
+        _Tess("Tess Amount", Range(0, 5)) = 1
+        _MaxTessDistance("Max Tess Distance", Range(0, 10)) = 1
     }
     SubShader
     {
@@ -19,10 +23,13 @@ Shader "Saltsuica/MySnow"
         Pass
         {
             CGPROGRAM
-            #pragma vertex vert
+            #pragma vertex tessVert
             #pragma fragment frag
+            #pragma hull hull
+            #pragma domain domain
             // make fog work
             #pragma multi_compile_fog
+            #pragma target 4.0
 
             #include "UnityCG.cginc"
 
@@ -40,40 +47,45 @@ Shader "Saltsuica/MySnow"
             uniform sampler2D _GlobalEffectRT;
             uniform float _OrthographicCamSize;
 
-
-
-            struct v2f
+            #include "SnowTessellation.cginc"
+            
+            ControlPoint tessVert(Attributes v)
             {
-                float4 vertex : SV_POSITION;
-                float4 color : COLOR0;
-            };
+                ControlPoint output;
+                output.vertex = v.vertex;
+                output.uv = v.uv;
+                output.color = v.color;
+                output.normal = v.normal;
 
-            v2f vert(appdata_full v)
-            {
-                v2f o;
-                float3 worldPos = mul(unity_ObjectToWorld, v.vertex);
-                float snowNoise = tex2Dlod(_SnowNoise, float4(worldPos.xz * _SnowNoiseScale, 0,0));
-
-                o.color = v.color;
-                o.vertex = v.vertex;
-
-                float2 uv = worldPos.xz - _Position.xz; // render-texture的uv坐标
-                uv = uv / (_OrthographicCamSize * 2);
-                uv += 0.5;
-
-                float4 RTEffect = tex2Dlod(_GlobalEffectRT, float4(uv, 0, 0));
-
-                // basic snow Bump
-                o.vertex.xyz += normalize(v.normal) * _SnowHeight + snowNoise * _SnowNoiseWeight;
-
-                // snow Snow marks
-                float dis = distance(_Position.xz, worldPos.xz);
-                float radius = 1 - saturate(dis / _SnowInteractRadius);
-                // o.vertex.xyz -= normalize(v.normal) * _SnowDepth * radius;
-                o.vertex.xyz -= normalize(v.normal) * RTEffect.g * _SnowDepth;
-                o.vertex = UnityObjectToClipPos(o.vertex);
-                return o;
+                return output;
             }
+
+            // v2f vert(appdata_full v)
+            // {
+            //     v2f o;
+            //     float3 worldPos = mul(unity_ObjectToWorld, v.vertex);
+            //     float snowNoise = tex2Dlod(_SnowNoise, float4(worldPos.xz * _SnowNoiseScale, 0,0));
+
+            //     o.color = v.color;
+            //     o.vertex = v.vertex;
+
+            //     float2 uv = worldPos.xz - _Position.xz; // render-texture的uv坐标
+            //     uv = uv / (_OrthographicCamSize * 2);
+            //     uv += 0.5;
+
+            //     float4 RTEffect = tex2Dlod(_GlobalEffectRT, float4(uv, 0, 0));
+
+            //     // basic snow Bump
+            //     o.vertex.xyz += normalize(v.normal) * _SnowHeight + snowNoise * _SnowNoiseWeight;
+
+            //     // snow Snow marks
+            //     float dis = distance(_Position.xz, worldPos.xz);
+            //     float radius = 1 - saturate(dis / _SnowInteractRadius);
+            //     // o.vertex.xyz -= normalize(v.normal) * _SnowDepth * radius;
+            //     o.vertex.xyz -= normalize(v.normal) * RTEffect.g * _SnowDepth;
+            //     o.vertex = UnityObjectToClipPos(o.vertex);
+            //     return o;
+            // }
 
             fixed4 frag(appdata_full i) : SV_TARGET
             {
