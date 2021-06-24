@@ -4,12 +4,16 @@ Shader "Saltsuica/MySnow"
     {
         [Header(Snow setting)]
         _SnowNoise("Snow Noise", 2D) = "" {}
+        _SnowTex("Snow Tex", 2D) = "" {}
         _SnowNoiseScale("Snow Noise Scale", Range(0, 2)) = 0.1
+        _SnowTexScale("Snow texture scale", Range(0, 2)) = 0.1
+        _SnowTextureOpacity("Snow Tex Opacity", Range(0, 2)) = 0.3
         _SnowHeight("Snow Height", Range(0, 5)) = 1
         _SnowNoiseWeight("Noise Weight", Range(0, 1)) = 0.1
 
         _SnowDepth("Snow Depth", Range(0, 10)) = 0.5
-        _SnowInteractRadius("Interactive radius", Range(0, 5)) = 1
+        _SnowPathColor("Path color", Color) = (0.5,0.5,0.7,1)
+        
 
         [Header(Tess setting)]
         _Tess("Tess Amount", Range(0, 5)) = 1
@@ -30,18 +34,25 @@ Shader "Saltsuica/MySnow"
             // make fog work
             #pragma multi_compile_fog
             #pragma target 4.0
+            #pragma require tessellation tessHW
 
             #include "UnityCG.cginc"
 
             // snow base
             sampler2D _SnowNoise;
+            sampler2D _SnowTex;
+
             float _SnowHeight; 
             float _SnowNoiseScale;
+            float _SnowTexScale;
             float _SnowNoiseWeight;
             float _SnowDepth;
+            float _SnowTextureOpacity;
+
+            //snow path
+            float4 _SnowPathColor;
 
             // snow trail
-            float _SnowInteractRadius;
 
             uniform float3 _Position;
             uniform sampler2D _GlobalEffectRT;
@@ -87,9 +98,22 @@ Shader "Saltsuica/MySnow"
             //     return o;
             // }
 
-            fixed4 frag(appdata_full i) : SV_TARGET
+            fixed4 frag(Varyings v) : SV_TARGET
             {
-                return float4(1,1,1,1);
+                float2 uv = v.worldPos.xz - _Position.xz; // render-texture的uv坐标
+                uv = uv / (_OrthographicCamSize * 2);
+                uv += 0.5;
+
+                float4 effect = tex2D(_GlobalEffectRT, uv);
+
+                float3 topdownNoise = tex2D(_SnowNoise, v.worldPos.xz * _SnowNoiseScale).rgb;
+                float3 snowTexRes = tex2D(_SnowTex, v.worldPos.xz * _SnowTexScale).rgb;
+
+                float3 maincolor = snowTexRes * _SnowTextureOpacity;
+
+                maincolor = lerp(maincolor, _SnowPathColor * effect.g * 2, saturate(effect.g * 3)).rgb;
+
+                return float4(maincolor, 1);
             }
 
             ENDCG

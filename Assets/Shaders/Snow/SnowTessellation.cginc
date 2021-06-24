@@ -63,8 +63,6 @@ Varyings vert(Attributes v)
     o.vertex.xyz += normalize(v.normal) * _SnowHeight + snowNoise * _SnowNoiseWeight;
 
     // snow Snow marks
-    float dis = distance(_Position.xz, worldPos.xz);
-    float radius = 1 - saturate(dis / _SnowInteractRadius);
     // o.vertex.xyz -= normalize(v.normal) * _SnowDepth * radius;
     o.vertex.xyz -= normalize(v.normal) * RTEffect.g * _SnowDepth;
     o.vertex = UnityObjectToClipPos(o.vertex);
