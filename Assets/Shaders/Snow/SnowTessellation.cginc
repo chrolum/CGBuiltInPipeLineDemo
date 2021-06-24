@@ -58,6 +58,8 @@ Varyings vert(Attributes v)
     uv += 0.5;
 
     float4 RTEffect = tex2Dlod(_GlobalEffectRT, float4(uv, 0, 0));
+    float mask = tex2Dlod(_Mask, float4(uv, 0, 0)).a;
+    RTEffect *= mask;
 
     // basic snow Bump
     o.vertex.xyz += normalize(v.normal) * _SnowHeight + snowNoise * _SnowNoiseWeight;
@@ -70,7 +72,8 @@ Varyings vert(Attributes v)
     o.worldPos = worldPos;
     o.normal = v.normal;
     o.uv = uv;
-    o.screenPos = ComputeScreenPos(v.vertex);
+    float4 clipvertex = o.vertex / o.vertex.w;
+    o.screenPos = ComputeScreenPos(clipvertex);
     o.viewDir = normalize(_WorldSpaceCameraPos - v.vertex);
     return o;
 }
@@ -133,9 +136,9 @@ TessellationFactors patchConstantFunction(InputPatch<ControlPoint, 3> patch)
     float edge2 = ColorCalcDistanceTessFactor(patch[2].vertex, minDist, maxDist, _Tess, patch[2].color);
 
     // TODO : why
-    f.edge[0] = (edge1 + edge1) / 2;
+    f.edge[0] = (edge1 + edge2) / 2;
     f.edge[1] = (edge0 + edge2) / 2;    
-    f.edge[2] = (edge1 + edge2) / 2;
+    f.edge[2] = (edge1 + edge0) / 2;
     f.inside = (edge0 + edge1 + edge2) / 3;
 
     return f;
