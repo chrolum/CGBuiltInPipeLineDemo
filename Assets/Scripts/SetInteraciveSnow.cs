@@ -6,6 +6,6 @@ public class SetInteraciveSnow : MonoBehaviour
 {
     void Update()
     {
-        Shader.SetGlobalVector("_PlayerPos", transform.position);
+        Shader.SetGlobalVector("_Position", transform.position);
     }
 }

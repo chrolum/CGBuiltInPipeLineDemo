@@ -112,7 +112,8 @@ Varyings domain(TessellationFactors factors, OutputPatch<ControlPoint, 3> patch,
 float ColorCalcDistanceTessFactor(float4 vertex, float minDist, float maxDist, float tess, float4 color)
 {
     float3 worldPosition = mul(unity_ObjectToWorld, vertex).xyz;
-    float dist = distance(worldPosition, _WorldSpaceCameraPos);
+    // float dist = distance(worldPosition, _WorldSpaceCameraPos);
+    float dist = distance(worldPosition, _Position);
     float f = clamp(1.0 - (dist - minDist) / (maxDist - minDist), 0.01, 1.0);
   // no tessellation on no red vertex colors
     if (color.r < 0.1)
@@ -125,7 +126,7 @@ float ColorCalcDistanceTessFactor(float4 vertex, float minDist, float maxDist, f
 
 TessellationFactors patchConstantFunction(InputPatch<ControlPoint, 3> patch)
 {
-    float minDist = 5.0;
+    float minDist = 0.1;
     float maxDist = _MaxTessDistance;
     TessellationFactors f;
 
@@ -135,7 +136,7 @@ TessellationFactors patchConstantFunction(InputPatch<ControlPoint, 3> patch)
 
     // TODO : why
     f.edge[0] = (edge1 + edge1) / 2;
-    f.edge[1] = (edge0 + edge2) / 2;
+    f.edge[1] = (edge0 + edge2) / 2;    
     f.edge[2] = (edge1 + edge2) / 2;
     f.inside = (edge0 + edge1 + edge2) / 3;
 

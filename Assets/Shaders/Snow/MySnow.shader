@@ -13,7 +13,7 @@ Shader "Saltsuica/MySnow"
 
         [Header(Tess setting)]
         _Tess("Tess Amount", Range(0, 5)) = 1
-        _MaxTessDistance("Max Tess Distance", Range(0, 10)) = 1
+        _MaxTessDistance("Max Tess Distance", Range(0, 100)) = 1
     }
     SubShader
     {
