@@ -11,12 +11,15 @@ Shader "Saltsuica/MySnow"
         _SnowHeight("Snow Height", Range(0, 5)) = 1
         _SnowNoiseWeight("Noise Weight", Range(0, 1)) = 0.1
 
-        _SnowDepth("Snow Depth", Range(0, 10)) = 0.5
+        _Mask("Mask", 2D) = "" {}
+
+        _SnowDepth("Snow Depth", Range(-10, 10)) = 0.5
+        _SnowColor("Snow Color", Color) = (0.5,0.5,0.5,1)
         _SnowPathColor("Path color", Color) = (0.5,0.5,0.7,1)
         
 
         [Header(Tess setting)]
-        _Tess("Tess Amount", Range(0, 5)) = 1
+        _Tess("Tess Amount", Range(0, 64)) = 1
         _MaxTessDistance("Max Tess Distance", Range(0, 100)) = 1
     }
     SubShader
@@ -31,7 +34,7 @@ Shader "Saltsuica/MySnow"
             #pragma fragment frag
             #pragma hull hull
             #pragma domain domain
-            // make fog work
+            // make fog work c 
             #pragma multi_compile_fog
             #pragma target 4.0
             #pragma require tessellation tessHW
@@ -51,7 +54,9 @@ Shader "Saltsuica/MySnow"
 
             //snow path
             float4 _SnowPathColor;
+            float4 _SnowColor;
 
+            sampler2D _Mask;
             // snow trail
 
             uniform float3 _Position;
@@ -105,17 +110,30 @@ Shader "Saltsuica/MySnow"
                 uv += 0.5;
 
                 float4 effect = tex2D(_GlobalEffectRT, uv);
+                float mask = tex2D(_Mask, uv).a;
+                effect *= mask;
 
                 float3 topdownNoise = tex2D(_SnowNoise, v.worldPos.xz * _SnowNoiseScale).rgb;
                 float3 snowTexRes = tex2D(_SnowTex, v.worldPos.xz * _SnowTexScale).rgb;
 
-                float3 maincolor = snowTexRes * _SnowTextureOpacity;
+                float3 maincolor = snowTexRes * _SnowTextureOpacity + _SnowColor;
 
                 maincolor = lerp(maincolor, _SnowPathColor * effect.g * 2, saturate(effect.g * 3)).rgb;
 
                 return float4(maincolor, 1);
             }
 
+            ENDCG
+        }
+
+        pass
+        {
+            Tags{ "LightMode" = "ShadowCaster" }
+            CGPROGRAM
+            float4 frag(Varyings v) :SV_TARGET
+            {
+                return 0;
+            }
             ENDCG
         }
     }

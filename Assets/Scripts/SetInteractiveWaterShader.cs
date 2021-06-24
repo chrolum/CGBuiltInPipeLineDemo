@@ -15,6 +15,6 @@ public class SetInteractiveWaterShader : MonoBehaviour
 
     private void Update() {
         transform.position = new Vector3(target.transform.position.x, transform.position.y, target.transform.position.z);
-        Shader.SetGlobalVector("_Position", transform.position);
+        Shader.SetGlobalVector("_Position", target.position);
     }
 }

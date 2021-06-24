@@ -15,7 +15,7 @@ struct Varyings
     float4 screenPos : TEXCOORD2;
     float3 viewDir : TEXCOORD3;
     // float fogFactor : TEXCOORD5;
-    // float4 shadowCoord : TEXCOORD7;
+    float4 shadowCoord : TEXCOORD7;
 };
 
 struct Attributes
@@ -69,6 +69,7 @@ Varyings vert(Attributes v)
     o.vertex.xyz -= normalize(v.normal) * RTEffect.g * _SnowDepth;
     o.vertex = UnityObjectToClipPos(o.vertex);
 
+    o.shadowCoord = TransformWorldToShadowCoord(mul(unity_ObjectToWorld, v.vertex));
     o.worldPos = worldPos;
     o.normal = v.normal;
     o.uv = uv;
