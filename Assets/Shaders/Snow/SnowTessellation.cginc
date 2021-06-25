@@ -5,26 +5,6 @@ struct vertexInput
 	float4 tangent : TANGENT;
 };
 
-struct Varyings
-{		
-    float3 worldPos : TEXCOORD1; // world position built-in value				
-    float4 color : COLOR;
-    float3 normal : NORMAL;
-    float4 vertex : SV_POSITION;
-    float2 uv : TEXCOORD0;
-    float4 screenPos : TEXCOORD2;
-    float3 viewDir : TEXCOORD3;
-    // float fogFactor : TEXCOORD5;
-    float4 shadowCoord : TEXCOORD7;
-};
-
-struct Attributes
-{
-    float4 vertex : POSITION;
-    float3 normal : NORMAL;
-    float2 uv : TEXCOORD0;
-    float4 color : COLOR; 
-};
 
 struct ControlPoint
 {
@@ -69,7 +49,11 @@ Varyings vert(Attributes v)
     o.vertex.xyz -= normalize(v.normal) * RTEffect.g * _SnowDepth;
     o.vertex = UnityObjectToClipPos(o.vertex);
 
-    o.shadowCoord = TransformWorldToShadowCoord(mul(unity_ObjectToWorld, v.vertex));
+    // o.shadowCoord = TransformWorldToShadowCoord(mul(unity_ObjectToWorld, v.vertex));
+    o._ShadowCoord = ComputeScreenPos(o.vertex);
+    #if UNITY_PASS_SHADOWCASTER
+        o.vertex = UnityApplyLinearShadowBias(o.vertex);
+    #endif
     o.worldPos = worldPos;
     o.normal = v.normal;
     o.uv = uv;

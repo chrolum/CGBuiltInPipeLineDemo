@@ -5,6 +5,7 @@ using UnityEngine;
 public class TimeSystem : MonoBehaviour
 {
     public Transform Sun;
+    public Transform Moon;
 
     public float Speed;
     public float prevSpeed;
@@ -21,6 +22,7 @@ public class TimeSystem : MonoBehaviour
     private void Update() {
         quatSun = Quaternion.AngleAxis(Speed, Vector3.right);
         Sun.rotation = Sun.rotation * quatSun;
+        Moon.rotation = Moon.rotation * quatSun;
 
     }
 

@@ -21,11 +21,71 @@ Shader "Saltsuica/MySnow"
         [Header(Tess setting)]
         _Tess("Tess Amount", Range(0, 64)) = 1
         _MaxTessDistance("Max Tess Distance", Range(0, 100)) = 1
+
+        [Header(Addtion setting)]
+        _SnowNightColor("Snow Night Color", Color) = (1,1,1,1)
     }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
         LOD 100
+
+        CGINCLUDE
+        #include "UnityCG.cginc"
+        #include "AutoLight.cginc"
+        #include "Lighting.cginc"
+        struct Varyings
+        {		
+            float3 worldPos : TEXCOORD1; // world position built-in value				
+            float4 color : COLOR;
+            float3 normal : NORMAL;
+            float4 vertex : SV_POSITION;
+            float2 uv : TEXCOORD0;
+            float4 screenPos : TEXCOORD2;
+            float3 viewDir : TEXCOORD3;
+            // float fogFactor : TEXCOORD5;
+            // float4 shadowCoord : TEXCOORD7;
+            unityShadowCoord4 _ShadowCoord : TEXCOORD7;
+        };
+
+        struct Attributes
+        {
+            float4 vertex : POSITION;
+            float3 normal : NORMAL;
+            float2 uv : TEXCOORD0;
+            float4 color : COLOR; 
+        };
+
+
+        uniform float3 _Position;
+        uniform sampler2D _GlobalEffectRT;
+        uniform float _OrthographicCamSize;
+
+        // snow base
+        sampler2D _SnowNoise;
+        sampler2D _SnowTex;
+
+        float _SnowHeight; 
+        float _SnowNoiseScale;
+        float _SnowTexScale;
+        float _SnowNoiseWeight;
+        float _SnowDepth;
+        float _SnowTextureOpacity;
+        sampler2D _Mask;
+
+        #include "SnowTessellation.cginc"
+        ControlPoint tessVert(Attributes v)
+        {
+            ControlPoint output;
+            output.vertex = v.vertex;
+            output.uv = v.uv;
+            output.color = v.color;
+            output.normal = v.normal;
+
+            return output;
+        }
+        
+        ENDCG
 
         Pass
         {
@@ -39,69 +99,18 @@ Shader "Saltsuica/MySnow"
             #pragma target 4.0
             #pragma require tessellation tessHW
 
-            #include "UnityCG.cginc"
 
-            // snow base
-            sampler2D _SnowNoise;
-            sampler2D _SnowTex;
 
-            float _SnowHeight; 
-            float _SnowNoiseScale;
-            float _SnowTexScale;
-            float _SnowNoiseWeight;
-            float _SnowDepth;
-            float _SnowTextureOpacity;
 
             //snow path
             float4 _SnowPathColor;
             float4 _SnowColor;
 
-            sampler2D _Mask;
             // snow trail
+            float4 _SnowNightColor;
 
-            uniform float3 _Position;
-            uniform sampler2D _GlobalEffectRT;
-            uniform float _OrthographicCamSize;
-
-            #include "SnowTessellation.cginc"
             
-            ControlPoint tessVert(Attributes v)
-            {
-                ControlPoint output;
-                output.vertex = v.vertex;
-                output.uv = v.uv;
-                output.color = v.color;
-                output.normal = v.normal;
 
-                return output;
-            }
-
-            // v2f vert(appdata_full v)
-            // {
-            //     v2f o;
-            //     float3 worldPos = mul(unity_ObjectToWorld, v.vertex);
-            //     float snowNoise = tex2Dlod(_SnowNoise, float4(worldPos.xz * _SnowNoiseScale, 0,0));
-
-            //     o.color = v.color;
-            //     o.vertex = v.vertex;
-
-            //     float2 uv = worldPos.xz - _Position.xz; // render-texture的uv坐标
-            //     uv = uv / (_OrthographicCamSize * 2);
-            //     uv += 0.5;
-
-            //     float4 RTEffect = tex2Dlod(_GlobalEffectRT, float4(uv, 0, 0));
-
-            //     // basic snow Bump
-            //     o.vertex.xyz += normalize(v.normal) * _SnowHeight + snowNoise * _SnowNoiseWeight;
-
-            //     // snow Snow marks
-            //     float dis = distance(_Position.xz, worldPos.xz);
-            //     float radius = 1 - saturate(dis / _SnowInteractRadius);
-            //     // o.vertex.xyz -= normalize(v.normal) * _SnowDepth * radius;
-            //     o.vertex.xyz -= normalize(v.normal) * RTEffect.g * _SnowDepth;
-            //     o.vertex = UnityObjectToClipPos(o.vertex);
-            //     return o;
-            // }
 
             fixed4 frag(Varyings v) : SV_TARGET
             {
@@ -116,25 +125,48 @@ Shader "Saltsuica/MySnow"
                 float3 topdownNoise = tex2D(_SnowNoise, v.worldPos.xz * _SnowNoiseScale).rgb;
                 float3 snowTexRes = tex2D(_SnowTex, v.worldPos.xz * _SnowTexScale).rgb;
 
-                float3 maincolor = snowTexRes * _SnowTextureOpacity + _SnowColor;
+                float3 maincolorDay = snowTexRes * _SnowTextureOpacity + _SnowColor;
+                float3 maincolorNight = snowTexRes * _SnowTextureOpacity + _SnowNightColor;
+                float shadow = SHADOW_ATTENUATION(v);
+                float NdotL = saturate(saturate(dot(v.normal, _WorldSpaceLightPos0))) * shadow;
+                float NdotLNagetive = dot(v.normal, -_WorldSpaceLightPos0);
+                maincolorDay = lerp(maincolorDay, _SnowPathColor * effect.g * 2, saturate(effect.g * 3)).rgb;
+                maincolorNight = lerp(maincolorNight, _SnowPathColor * effect.g * 2, saturate(effect.g * 3)).rgb;
 
-                maincolor = lerp(maincolor, _SnowPathColor * effect.g * 2, saturate(effect.g * 3)).rgb;
+                // add shadow
 
-                return float4(maincolor, 1);
+                return float4(maincolorDay, 1) * NdotL + float4(maincolorNight, 1) * smoothstep(-0.5, 0.5, NdotLNagetive);
             }
 
             ENDCG
         }
 
-        pass
+        Pass
         {
+
             Tags{ "LightMode" = "ShadowCaster" }
+
+
+            ZWrite On
+            ZTest LEqual
+
             CGPROGRAM
-            float4 frag(Varyings v) :SV_TARGET
+            #pragma fragment frag
+            #pragma vertex tessVert
+            #pragma hull hull
+            #pragma domain domain
+            #pragma target 4.6
+            #pragma multi_compile_shadowcaster
+
+            half4 frag(Varyings IN) : SV_Target
             {
-                return 0;
+                SHADOW_CASTER_FRAGMENT(IN);
             }
+
             ENDCG
         }
+
+        
     }
+    Fallback "Diffuse"
 }
