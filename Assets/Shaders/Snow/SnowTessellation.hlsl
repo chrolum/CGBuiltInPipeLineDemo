@@ -32,6 +32,7 @@ struct TessellationFactors
 
 float _Tess;
 float _MaxTessDistance;
+float _NormalCuttoff;
 
 float4 GetShadowPositionHClip(Attributes input)
 {
@@ -83,7 +84,11 @@ Varyings vert(Attributes v)
         // o.vertex = vertexInput.positionCS; // clips space
     #endif
     o.worldPos = vertexInput.positionWS;
-    o.normal = saturate(v.normal * snowNoise);
+    // o.normal = saturate(v.normal * step(_NormalCuttoff, snowNoise * 0.4));
+    o.planeNormal = v.normal;
+    o.normal = saturate(v.normal * saturate(snowNoise - _NormalCuttoff) * 0.4);
+    // o.normal = saturate(v.normal * (step(1-_NormalCuttoff, snowNoise)));
+    o.normal.y += (RTEffect.g * 0.4);
     o.uv = uv;
     float4 clipvertex = o.vertex / o.vertex.w;
     o.screenPos = ComputeScreenPos(clipvertex);

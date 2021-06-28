@@ -10,6 +10,10 @@ Shader "Saltsuica/MySnow"
         _SnowTextureOpacity("Snow Tex Opacity", Range(0, 2)) = 0.3
         _SnowHeight("Snow Height", Range(0, 5)) = 1
         _SnowNoiseWeight("Noise Weight", Range(0, 1)) = 0.1
+        _NormalCuttoff("Normal Cut off", Range(0, 1)) = 0.1
+        _SparkleNoise("Sparkle Noise", 2D) = "" {}
+        _SparkleScale("SparkScale", Range(0, 10)) = 1
+        _SparkleCutoff("Spark Cut Off", Range(0, 1)) = 0.1
 
         _Mask("Mask", 2D) = "" {}
 
@@ -24,6 +28,9 @@ Shader "Saltsuica/MySnow"
 
         [Header(Addtion setting)]
         _SnowNightColor("Snow Night Color", Color) = (1,1,1,1)
+        _EdgeColor("Snow Edge Color", Color) = (0.5,0.5,0.5,1)
+        _Edgewidth("Snow Edge Width", Range(0,0.2)) = 0.1
+        _BaseTexture("Base Texture", 2D) = "" {}
     }
     HLSLINCLUDE
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -52,6 +59,7 @@ Shader "Saltsuica/MySnow"
         float3 viewDir : TEXCOORD3;
         float fogFactor : TEXCOORD5;
         float4 shadowCoord : TEXCOORD7;
+        float3 planeNormal : NORMAL1;
     };
 
     struct Attributes
@@ -126,6 +134,14 @@ Shader "Saltsuica/MySnow"
             // snow trail
             float4 _SnowNightColor;
 
+            float _Edgewidth;
+            float4 _EdgeColor;
+            float _SparkleScale;
+            float _SparkleCutoff;
+
+            sampler2D _BaseTexture;
+            sampler2D _SparkleNoise;
+
             
 
 
@@ -140,13 +156,20 @@ Shader "Saltsuica/MySnow"
                 effect *= mask;
 
                 float3 topdownNoise = tex2D(_SnowNoise, v.worldPos.xz * _SnowNoiseScale).rgb;
-                float3 snowTexRes = tex2D(_SnowTex, v.worldPos.xz * _SnowTexScale).rgb;
+                float vertexColoredPrimary = step(0.6 * topdownNoise,v.color.r).r;
+                float snowTex = tex2D(_SnowTex, v.worldPos.xz * _SnowTexScale).rgb;
+                float3 snowTexRes = snowTex * vertexColoredPrimary;
+
+                //for edge
+                float vertexColorEdge = ((step((0.6 - _Edgewidth) * topdownNoise, v.color.r)) * (1 - vertexColoredPrimary)).r;
+                float3 baseTexture = tex2D(_BaseTexture, v.worldPos.xz).rgb;
+                float3 baseTextureResult = baseTexture * (1 - (vertexColoredPrimary + vertexColorEdge));
 
                 float3 maincolorDay = snowTexRes * _SnowTextureOpacity + _SnowColor;
                 float3 maincolorNight = snowTexRes * _SnowTextureOpacity + _SnowNightColor;
                 // float shadow = SHADOW_ATTENUATION(v);
-                float NdotL = saturate(saturate(dot(v.normal, _MainLightPosition)));
-                float NdotLNagetive = dot(v.normal, -_MainLightPosition);
+                float NdotL = saturate(dot(v.planeNormal, _MainLightPosition));
+                float NdotLNagetive = dot(v.planeNormal, -_MainLightPosition);
                 maincolorDay = lerp(maincolorDay, _SnowPathColor * effect.g * 2, saturate(effect.g * 3)).rgb;
                 maincolorNight = lerp(maincolorNight, _SnowPathColor * effect.g * 2, saturate(effect.g * 3)).rgb;
 
@@ -159,11 +182,21 @@ Shader "Saltsuica/MySnow"
 				#endif
 
                 float shadows = mainLight.shadowAttenuation;
-                // return float4(shadows, shadows, shadows, 1);
-                
-                // return float4(shadows, shadows, shadows, 1);
 
-                return float4(maincolorDay, 1) * saturate(NdotL) + float4(maincolorNight, 1) * smoothstep(-0.5, 0.5, NdotLNagetive);
+                // float4 litMainColors = float4(maincolorDay, 1) * saturate(NdotL) + float4(maincolorNight, 1) * saturate(smoothstep(-0.5, 0.5, NdotLNagetive));
+                float4 litMainColors = float4(maincolorDay, 1) * shadows * NdotL + float4(baseTextureResult, 1);
+                // sparles
+                float sparklesStatic = tex2D(_SparkleNoise, v.worldPos.xz * _SparkleScale * 5).r;
+                float sparklesRes = tex2D(_SparkleNoise, (v.worldPos.xz + v.screenPos) * _SparkleScale) * sparklesStatic;
+                litMainColors += step(_SparkleCutoff, sparklesRes);
+                float4 extraColors;
+                extraColors.rgb = litMainColors * mainLight.color.rgb * (shadows + unity_AmbientSky);
+                extraColors.a = 1;
+                // return float4(shadows, shadows, shadows, 1);
+                float4 finalColors = litMainColors + float4(maincolorNight, 1) * saturate(smoothstep(-0.5, 0.5, NdotLNagetive));
+                // return float4(shadows, shadows, shadows, 1);
+                // return float4(v.normal, 1);
+                return finalColors;
                 // return float4(maincolorDay, 1) * saturate(NdotL);
             }
 
