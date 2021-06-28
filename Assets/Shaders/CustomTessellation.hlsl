@@ -1,6 +1,13 @@
 // Tessellation programs based on this article by Catlike Coding:
 // https://catlikecoding.com/unity/tutorials/advanced-rendering/tessellation/
-
+#if defined(SHADER_API_D3D11) || defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE) || defined(SHADER_API_VULKAN) || defined(SHADER_API_METAL) || defined(SHADER_API_PSSL)
+#define UNITY_CAN_COMPILE_TESSELLATION 1
+#   define UNITY_domain                 domain
+#   define UNITY_partitioning           partitioning
+#   define UNITY_outputtopology         outputtopology
+#   define UNITY_patchconstantfunc      patchconstantfunc
+#   define UNITY_outputcontrolpoints    outputcontrolpoints
+#endif
 struct vertexInput
 {
 	float4 vertex : POSITION;
