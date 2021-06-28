@@ -1,3 +1,12 @@
+#if defined(SHADER_API_D3D11) || defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE) || defined(SHADER_API_VULKAN) || defined(SHADER_API_METAL) || defined(SHADER_API_PSSL)
+#define UNITY_CAN_COMPILE_TESSELLATION 1
+#   define UNITY_domain                 domain
+#   define UNITY_partitioning           partitioning
+#   define UNITY_outputtopology         outputtopology
+#   define UNITY_patchconstantfunc      patchconstantfunc
+#   define UNITY_outputcontrolpoints    outputcontrolpoints
+#endif
+
 struct vertexInput
 {
 	float4 vertex : POSITION;
@@ -24,10 +33,25 @@ struct TessellationFactors
 float _Tess;
 float _MaxTessDistance;
 
+float4 GetShadowPositionHClip(Attributes input)
+{
+    float3 positionWS = TransformObjectToWorld(input.vertex.xyz);
+    float3 normalWS = TransformObjectToWorldNormal(input.normal);
+
+    float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, 0));
+    
+#if UNITY_REVERSED_Z
+    positionCS.z = min(positionCS.z, UNITY_NEAR_CLIP_VALUE);
+#else
+    positionCS.z = max(positionCS.z, UNITY_NEAR_CLIP_VALUE);
+#endif
+    return positionCS;
+}
+
 Varyings vert(Attributes v)
 {
     Varyings o;
-    float3 worldPos = mul(unity_ObjectToWorld, v.vertex);
+    float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
     float snowNoise = tex2Dlod(_SnowNoise, float4(worldPos.xz * _SnowNoiseScale, 0,0));
 
     o.color = v.color;
@@ -42,20 +66,24 @@ Varyings vert(Attributes v)
     RTEffect *= mask;
 
     // basic snow Bump
-    o.vertex.xyz += normalize(v.normal) * _SnowHeight + snowNoise * _SnowNoiseWeight;
+    v.vertex.xyz += normalize(v.normal) * _SnowHeight + snowNoise * _SnowNoiseWeight;
 
     // snow Snow marks
     // o.vertex.xyz -= normalize(v.normal) * _SnowDepth * radius;
-    o.vertex.xyz -= normalize(v.normal) * RTEffect.g * _SnowDepth;
-    o.vertex = UnityObjectToClipPos(o.vertex);
+    v.vertex.xyz -= normalize(v.normal) * RTEffect.g * _SnowDepth;
 
     // o.shadowCoord = TransformWorldToShadowCoord(mul(unity_ObjectToWorld, v.vertex));
-    o._ShadowCoord = ComputeScreenPos(o.vertex);
-    #if UNITY_PASS_SHADOWCASTER
-        o.vertex = UnityApplyLinearShadowBias(o.vertex);
+    VertexPositionInputs vertexInput = GetVertexPositionInputs(v.vertex.xyz);
+    o.shadowCoord = GetShadowCoord(vertexInput);
+    #ifdef SHADERPASS_SHADOWCASTER
+        o.vertex = GetShadowPositionHClip(v);
+    #else
+        o.vertex = TransformObjectToHClip(v.vertex.xyz);
+        // or
+        // o.vertex = vertexInput.positionCS; // clips space
     #endif
-    o.worldPos = worldPos;
-    o.normal = v.normal;
+    o.worldPos = vertexInput.positionWS;
+    o.normal = saturate(v.normal * snowNoise);
     o.uv = uv;
     float4 clipvertex = o.vertex / o.vertex.w;
     o.screenPos = ComputeScreenPos(clipvertex);

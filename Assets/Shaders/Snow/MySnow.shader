@@ -25,82 +25,99 @@ Shader "Saltsuica/MySnow"
         [Header(Addtion setting)]
         _SnowNightColor("Snow Night Color", Color) = (1,1,1,1)
     }
+    HLSLINCLUDE
+    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
+
+    #pragma multi_compile _ _SCREEN_SPACE_OCCLUSION
+    #pragma multi_compile _ LIGHTMAP_ON
+    #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+    #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+    #pragma multi_compile _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS _ADDITIONAL_OFF
+    #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
+    #pragma multi_compile _ _SHADOWS_SOFT
+    #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
+    #pragma multi_compile _ SHADOWS_SHADOWMASK
+
+    struct Varyings
+    {		
+        float3 worldPos : TEXCOORD1; // world position built-in value				
+        float4 color : COLOR;
+        float3 normal : NORMAL;
+        float4 vertex : SV_POSITION;
+        float2 uv : TEXCOORD0;
+        float4 screenPos : TEXCOORD2;
+        float3 viewDir : TEXCOORD3;
+        float fogFactor : TEXCOORD5;
+        float4 shadowCoord : TEXCOORD7;
+    };
+
+    struct Attributes
+    {
+        float4 vertex : POSITION;
+        float3 normal : NORMAL;
+        float2 uv : TEXCOORD0;
+        float4 color : COLOR; 
+    };
+
+
+    uniform float3 _Position;
+    uniform sampler2D _GlobalEffectRT;
+    uniform float _OrthographicCamSize;
+
+    // snow base
+    sampler2D _SnowNoise;
+    sampler2D _SnowTex;
+
+    float _SnowHeight; 
+    float _SnowNoiseScale;
+    float _SnowTexScale;
+    float _SnowNoiseWeight;
+    float _SnowDepth;
+    float _SnowTextureOpacity;
+    sampler2D _Mask;
+
+    #include "SnowTessellation.hlsl"
+    ControlPoint tessVert(Attributes v)
+    {
+        ControlPoint output;
+        output.vertex = v.vertex;
+        output.uv = v.uv;
+        output.color = v.color;
+        output.normal = v.normal;
+
+        return output;
+    }
+
+    #pragma require tessellation tessHW
+    #pragma vertex tessVert
+    #pragma hull hull
+    #pragma domain domain
+    
+    ENDHLSL
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags 
+        { 
+            "RenderType"="Opaque" 
+            "RenderPipeline" = "UniversalPipeline"
+        }
         LOD 100
 
-        CGINCLUDE
-        #include "UnityCG.cginc"
-        #include "AutoLight.cginc"
-        #include "Lighting.cginc"
-        struct Varyings
-        {		
-            float3 worldPos : TEXCOORD1; // world position built-in value				
-            float4 color : COLOR;
-            float3 normal : NORMAL;
-            float4 vertex : SV_POSITION;
-            float2 uv : TEXCOORD0;
-            float4 screenPos : TEXCOORD2;
-            float3 viewDir : TEXCOORD3;
-            // float fogFactor : TEXCOORD5;
-            // float4 shadowCoord : TEXCOORD7;
-            unityShadowCoord4 _ShadowCoord : TEXCOORD7;
-        };
-
-        struct Attributes
-        {
-            float4 vertex : POSITION;
-            float3 normal : NORMAL;
-            float2 uv : TEXCOORD0;
-            float4 color : COLOR; 
-        };
-
-
-        uniform float3 _Position;
-        uniform sampler2D _GlobalEffectRT;
-        uniform float _OrthographicCamSize;
-
-        // snow base
-        sampler2D _SnowNoise;
-        sampler2D _SnowTex;
-
-        float _SnowHeight; 
-        float _SnowNoiseScale;
-        float _SnowTexScale;
-        float _SnowNoiseWeight;
-        float _SnowDepth;
-        float _SnowTextureOpacity;
-        sampler2D _Mask;
-
-        #include "SnowTessellation.cginc"
-        ControlPoint tessVert(Attributes v)
-        {
-            ControlPoint output;
-            output.vertex = v.vertex;
-            output.uv = v.uv;
-            output.color = v.color;
-            output.normal = v.normal;
-
-            return output;
-        }
         
-        ENDCG
 
         Pass
         {
-            CGPROGRAM
-            #pragma vertex tessVert
-            #pragma fragment frag
-            #pragma hull hull
-            #pragma domain domain
+            Tags
+            {
+                "LightMode" = "UniversalForward"
+            }
+            HLSLPROGRAM
             // make fog work c 
             #pragma multi_compile_fog
-            #pragma target 4.0
-            #pragma require tessellation tessHW
-
-
-
+            #pragma fragment frag
 
             //snow path
             float4 _SnowPathColor;
@@ -112,7 +129,7 @@ Shader "Saltsuica/MySnow"
             
 
 
-            fixed4 frag(Varyings v) : SV_TARGET
+            float4 frag(Varyings v) : SV_TARGET
             {
                 float2 uv = v.worldPos.xz - _Position.xz; // render-texture的uv坐标
                 uv = uv / (_OrthographicCamSize * 2);
@@ -127,46 +144,52 @@ Shader "Saltsuica/MySnow"
 
                 float3 maincolorDay = snowTexRes * _SnowTextureOpacity + _SnowColor;
                 float3 maincolorNight = snowTexRes * _SnowTextureOpacity + _SnowNightColor;
-                float shadow = SHADOW_ATTENUATION(v);
-                float NdotL = saturate(saturate(dot(v.normal, _WorldSpaceLightPos0))) * shadow;
-                float NdotLNagetive = dot(v.normal, -_WorldSpaceLightPos0);
+                // float shadow = SHADOW_ATTENUATION(v);
+                float NdotL = saturate(saturate(dot(v.normal, _MainLightPosition)));
+                float NdotLNagetive = dot(v.normal, -_MainLightPosition);
                 maincolorDay = lerp(maincolorDay, _SnowPathColor * effect.g * 2, saturate(effect.g * 3)).rgb;
                 maincolorNight = lerp(maincolorNight, _SnowPathColor * effect.g * 2, saturate(effect.g * 3)).rgb;
 
                 // add shadow
+                float4 shadowCoord = TransformWorldToShadowCoord(v.worldPos);
+                #if _MAIN_LIGHT_SHADOWS_CASCADE || _MAIN_LIGHT_SHADOWS
+                    Light mainLight = GetMainLight(shadowCoord);
+				#else
+                    Light mainLight = GetMainLight();
+				#endif
 
-                return float4(maincolorDay, 1) * NdotL + float4(maincolorNight, 1) * smoothstep(-0.5, 0.5, NdotLNagetive);
+                float shadows = mainLight.shadowAttenuation;
+                // return float4(shadows, shadows, shadows, 1);
+                
+                // return float4(shadows, shadows, shadows, 1);
+
+                return float4(maincolorDay, 1) * saturate(NdotL) + float4(maincolorNight, 1) * smoothstep(-0.5, 0.5, NdotLNagetive);
+                // return float4(maincolorDay, 1) * saturate(NdotL);
             }
 
-            ENDCG
+            ENDHLSL
         }
 
-        Pass
-        {
+        // Pass
+        // {
 
-            Tags{ "LightMode" = "ShadowCaster" }
+        //     Tags{ "LightMode" = "ShadowCaster" }
 
+        //     ZWrite On
+        //     ZTest LEqual
 
-            ZWrite On
-            ZTest LEqual
+        //     HLSLPROGRAM
+        //     #pragma fragment frag
 
-            CGPROGRAM
-            #pragma fragment frag
-            #pragma vertex tessVert
-            #pragma hull hull
-            #pragma domain domain
-            #pragma target 4.6
-            #pragma multi_compile_shadowcaster
+        //     half4 frag(Varyings IN) : SV_Target
+        //     {
+        //         return 0;
+        //     }
 
-            half4 frag(Varyings IN) : SV_Target
-            {
-                SHADOW_CASTER_FRAGMENT(IN);
-            }
-
-            ENDCG
-        }
+        //     ENDHLSL
+        // }
 
         
     }
-    Fallback "Diffuse"
+    Fallback off
 }
