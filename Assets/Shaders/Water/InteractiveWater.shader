@@ -23,7 +23,7 @@ Shader "Saltsuica/InteractWater"
         {
             "RenderType"="Opaque" 
             "Queue" = "Transparent"
-            "LightMode" = "ForwardBase"
+            "RenderPipeline" = "UniversalPipeline"
             
         }
         LOD 100
@@ -36,34 +36,41 @@ Shader "Saltsuica/InteractWater"
             Tags{ "LightMode" = "Always" }
         }
 
+        HLSLINCLUDE
+        #pragma vertex vert
+        #pragma fragment frag
+        // make fog work
+        #pragma multi_compile_fog
+
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
+
+        struct Attributes 
+        {
+        float4 positionOS   : POSITION;
+        float2 uv           : TEXCOORD0;
+        float3 normal       : NORMAL;
+        };
+
+        struct Varyings 
+        {
+            float4 positionCS : SV_POSITION;
+            float3 positionWS : TEXCOORD0;
+            float4 positionSS : TEXCOORD1;
+            float2 uv : TEXCOORD2;
+            float3 normal : NORMAL;
+        };
+        ENDHLSL
+
         Pass
         {
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma fragment frag
-            // make fog work
-            #pragma multi_compile_fog
-
-            #include "UnityCG.cginc"
-            #include "UnityLightingCommon.cginc"
-
-            struct appdata
+            Tags
             {
-                float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
-                float3 normal : NORMAL;
-            };
-
-            struct v2f
-            {
-                float2 uv : TEXCOORD3;
-                // float2 uv : TEXCOORD0;
-                UNITY_FOG_COORDS(1)
-                float4 vertex : SV_POSITION;
-                float4 srcPos : TEXCOORD2;
-                float4 worldPos : TEXCOORD4;
-                float3 normal : NORMAL;
-            };
+                "LightMode" = "UniversalForward"
+            }
+            HLSLPROGRAM
+            
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
@@ -88,45 +95,41 @@ Shader "Saltsuica/InteractWater"
 
             float _TextureDistort;
 
-            v2f vert (appdata v)
+            Varyings vert (Attributes v)
             {
-                v2f o;
-                UNITY_INITIALIZE_OUTPUT(v2f, o);
+                Varyings o;
                 //make some wave
                 // 几种不同的波形
                 // v.vertex.y += sin(_Time.z * _Speed + v.vertex.x * _Amount);
                 // v.vertex.y += sin(_Time.z * _Speed + v.vertex.z * _Amount);
                 // v.vertex.y += sin(_Time.z * _Speed + v.vertex.x * _Amount + v.vertex.z * _Amount);
-                v.vertex.y += sin(_Time.z * _Speed + v.vertex.x * v.vertex.z * _Amount) * _Height;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.worldPos = mul(unity_ObjectToWorld, v.vertex);
+                v.positionOS.y += sin(_Time.z * _Speed + v.positionOS.x * v.positionOS.z * _Amount) * _Height;
+                VertexPositionInputs vertInput = GetVertexPositionInputs(v.positionOS.xyz);
+                o.positionCS = vertInput.positionCS;
+                o.positionWS = vertInput.positionWS;
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                o.srcPos = ComputeScreenPos(o.vertex);
+                o.positionSS = ComputeScreenPos(o.positionCS);
                 o.normal = v.normal;
-
-
-
-                UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            half4 frag (Varyings i) : SV_Target
             {
                 // sample the texture
-                float distortx = tex2D(_NoiseTex, (i.worldPos.xz * _Scale) + (_Time.x * 2)).r;
-                half4 col = tex2D(_MainTex, (i.worldPos.xz * _Scale) - (distortx * _TextureDistort));
-                half depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(i.srcPos)));
+                float distortx = tex2D(_NoiseTex, (i.positionWS.xz * _Scale) + (_Time.x * 2)).r;
+                half4 col = tex2D(_MainTex, (i.positionWS.xz * _Scale) - (distortx * _TextureDistort));
+                
+                half depth = LinearEyeDepth(tex2Dproj(_CameraDepthTexture, float4(i.positionSS.xz / i.positionSS.w, 0, 0)), _ZBufferParams);
                 // apply fog
-                UNITY_APPLY_FOG(i.fogCoord, col);
 
                 //for foamline
-                half4 foamLine = 1-saturate(_Foam * (depth - i.srcPos.w));
+                half4 foamLine = 1-saturate(_Foam * (depth - i.positionSS.w));
                 // float3 ambient = ShadeSH9(float4(i.normal, 1));
                 //TODO: use NdotL
-                float NdotL = saturate(dot(i.normal, _WorldSpaceLightPos0));
-                col *= _LightColor0 * NdotL; //改用直接光照，不再自定义颜色
+                float NdotL = saturate(dot(i.normal, _MainLightPosition));
+                col *= _MainLightColor * NdotL; //改用直接光照，不再自定义颜色
 
-                float2 uv = i.worldPos.xz - _Position.xz;
+                float2 uv = i.positionWS.xz - _Position.xz;
                 uv = uv / (_OrthographicCamSize * 2);
                 uv += 0.5;
                 float ripples = tex2D(_GlobalEffectRT, uv).b;
@@ -137,9 +140,9 @@ Shader "Saltsuica/InteractWater"
                 // TODO: foamline 应该根据直接光照的颜色亮度计算明暗
                 col += foamLine;
 
-                return col + ripples * _LightColor0;
+                return col + ripples * _MainLightColor;
             }
-            ENDCG
+            ENDHLSL
         }
     }
 }
