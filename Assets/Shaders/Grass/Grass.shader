@@ -21,20 +21,24 @@ Shader "Saltsuica/Grass"
 
 		_BladeForward("Blade Forward Amount", Range(0, 2)) = 0.38
 		_BladeCurve("Blade Curvature Amount", Range(1, 4)) = 2
+
+		[Header(Addition setting)]
+		_LightIntensity("Addition Light Intensity", Range(0, 3)) = 0.1
     }
 
-	CGINCLUDE
-	#include "UnityCG.cginc"
-	#include "Autolight.cginc"
-	#include "../CustomTessellation.cginc"
+	HLSLINCLUDE
+	#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+	#include "Assets/Shaders/CustomTessellation.hlsl"
 
-	#define BLADE_SEGMENTS 10
+	#define BLADE_SEGMENTS 5
 
 	struct geometryOutput	
 	{
 		float4 pos : SV_POSITION;
 		float2 uv : TEXCOORD0;
-		unityShadowCoord4 _ShadowCoord : TEXCOORD1;
+		float4 shadowCoord : TEXCOORD1;
 		float3 normal : NORMAL;
 	};
 
@@ -55,13 +59,22 @@ Shader "Saltsuica/Grass"
 	geometryOutput VertexOutput(float3 pos, float2 uv, float3 normal)
 	{
 		geometryOutput o;
-		o.pos = UnityObjectToClipPos(pos); //NDC空间
+
+		VertexPositionInputs vertexInput = GetVertexPositionInputs(pos);
 		o.uv = uv;
-		o._ShadowCoord = ComputeScreenPos(o.pos);//在shadow pass生成深度图后，需要计算顶点在屏幕空间的坐标方便采样
-		o.normal = UnityObjectToWorldNormal(normal);
-		#if UNITY_PASS_SHADOWCASTER
-			o.pos = UnityApplyLinearShadowBias(o.pos);
-		#endif
+		float3 positionWS = vertexInput.positionWS;
+    	float3 normalWS = TransformObjectToWorldNormal(normal);
+
+    	float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, 0));
+		o.shadowCoord = GetShadowCoord(vertexInput);
+		o.normal = normalWS;
+   		#ifdef SHADERPASS_SHADOWCASTER
+        	o.pos = GetShadowPositionHClip(v);
+    	#else
+        	o.pos = TransformObjectToHClip(pos);
+        // or
+        // o.vertex = vertexInput.positionCS; // clips space
+    #endif
 		return o; 
 	}
 
@@ -149,10 +162,10 @@ Shader "Saltsuica/Grass"
 		// 采样角度乘上0.5 防止草被吹到地下
 		// 使用旋转实现的风吹效果是不正确的，整片草都会旋转
 		// 正确的效果应该是草的根部不动
-		float3x3 windRotation = AngleAxis3x3(UNITY_PI * windSample, windDir);
+		float3x3 windRotation = AngleAxis3x3(PI * windSample, windDir);
 
-		float3x3 facingRotationMatrix = AngleAxis3x3(rand(pos) * UNITY_TWO_PI, float3(0, 0, 1));
-		float3x3 bendRotationMatrix = AngleAxis3x3(rand(pos.zzx) * _BendRotationRandom * UNITY_PI * 0.5, float3(1, 0, 0));
+		float3x3 facingRotationMatrix = AngleAxis3x3(rand(pos) * TWO_PI, float3(0, 0, 1));
+		float3x3 bendRotationMatrix = AngleAxis3x3(rand(pos.zzx) * _BendRotationRandom * PI * 0.5, float3(1, 0, 0));
 
 		//草的顶点单独应用风变换
 		float3x3 windTrans = mul(tangentToLocal, windRotation);
@@ -199,44 +212,48 @@ Shader "Saltsuica/Grass"
 	// 	o.tangent = v.tangent;
 	// 	return o;
 	// }
-	ENDCG
+	ENDHLSL
 
     SubShader
     {
+		Tags
+		{
+			"RenderType"="Opaque" 
+            "RenderPipeline" = "UniversalPipeline"
+		}
 		Cull Off
 
         Pass
         {
 			Tags
 			{
-				"RenderType" = "Opaque"
-				"LightMode" = "ForwardBase"
+				"LightMode" = "UniversalForward"
 			}
 
-            CGPROGRAM
+            HLSLPROGRAM
             #pragma vertex vert
 			#pragma geometry geo
             #pragma fragment frag
 			#pragma hull hull
 			#pragma domain domain
 			#pragma target 4.6
-			#pragma multi_compile_fwdbase
              
-			#include "Lighting.cginc"
-
 
 			float4 _TopColor;
 			float4 _BottomColor;
 			float _TranslucentGain;
+			float _LightIntensity;
 
-			float4 frag (geometryOutput i, fixed facing : VFACE) : SV_Target
+			float4 frag (geometryOutput i, float facing : VFACE) : SV_Target
             {	
 				float3 normal = facing > 0 ? i.normal : -i.normal;
-				float shadow = SHADOW_ATTENUATION(i);
-				float NdotL = saturate(saturate(dot(normal, _WorldSpaceLightPos0)) + _TranslucentGain) * shadow;
+				// float shadow = SHADOW_ATTENUATION(i);
+				float NdotL = saturate(saturate(dot(normal, _MainLightPosition)) + _TranslucentGain);
 
-				float3 ambient = ShadeSH9(float4(normal, 1));
-				float4 lightIntensity = NdotL * _LightColor0 + float4(ambient, 1);
+				//TODO: add ambient
+				// float3 ambient = ShadeSH9(float4(normal, 1));
+				Light mainLight = GetMainLight();
+				float4 lightIntensity = float4(NdotL * mainLight.color * _LightIntensity, 1);
 				float4 col = lerp(_BottomColor, _TopColor, i.uv.y);
 
 				return col * lightIntensity;
@@ -244,7 +261,7 @@ Shader "Saltsuica/Grass"
 				// return visibility * lerp(_BottomColor, _TopColor, i.uv.y);
 				// return lerp(_BottomColor, _TopColor, i.uv.y); //定义一个底部颜色和顶部颜色，更具uv的v来线性插值出颜色
             }
-            ENDCG
+            ENDHLSL
         }
 
 		// 需要一个shadow pass 计算一次shadow map, 以便草采样阴影
@@ -255,21 +272,19 @@ Shader "Saltsuica/Grass"
 				"LightMode" = "ShadowCaster"
 			}
 
-			CGPROGRAM
+			HLSLPROGRAM
 			#pragma vertex vert
 			#pragma geometry geo
 			#pragma fragment frag
 			#pragma hull hull
 			#pragma domain domain
-			#pragma target 4.6
-			#pragma multi_compile_shadowcaster
 
 			float4 frag(geometryOutput i) : SV_TARGET
 			{
-				SHADOW_CASTER_FRAGMENT(i);
+				return 0;
 			}
 
-			ENDCG
+			ENDHLSL
 		}
     }
 }

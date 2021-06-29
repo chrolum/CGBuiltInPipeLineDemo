@@ -20,10 +20,11 @@ Shader "Saltsuica/SimpleGrass"
 		_WindStrength("Wind Strength", Range(0.01, 2)) = 1
     }
 
-	CGINCLUDE
-	#include "UnityCG.cginc"
-	#include "Autolight.cginc"
-	#include "../CustomTessellation.cginc"
+	HLSLINCLUDE
+	#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+	#include "../CustomTessellation.hlsl"
 
 	struct geometryOutput	
 	{
@@ -48,7 +49,8 @@ Shader "Saltsuica/SimpleGrass"
 	geometryOutput VertexOutput(float3 pos, float2 uv)
 	{
 		geometryOutput o;
-		o.pos = UnityObjectToClipPos(pos);
+		VertexPositionInputs vertexInput = GetVertexPositionInputs(pos);
+		o.pos = vertexInput.positionCS;
 		o.uv = uv;
 		return o; 
 	}
@@ -123,10 +125,10 @@ Shader "Saltsuica/SimpleGrass"
 		// 采样角度乘上0.5 防止草被吹到地下
 		// 使用旋转实现的风吹效果是不正确的，整片草都会旋转
 		// 正确的效果应该是草的根部不动
-		float3x3 windRotation = AngleAxis3x3(UNITY_PI * windSample, windDir);
+		float3x3 windRotation = AngleAxis3x3(PI * windSample, windDir);
 
-		float3x3 facingRotationMatrix = AngleAxis3x3(rand(pos) * UNITY_TWO_PI, float3(0, 0, 1));
-		float3x3 bendRotationMatrix = AngleAxis3x3(rand(pos.zzx) * _BendRotationRandom * UNITY_PI * 0.5, float3(1, 0, 0));
+		float3x3 facingRotationMatrix = AngleAxis3x3(rand(pos) * TWO_PI, float3(0, 0, 1));
+		float3x3 bendRotationMatrix = AngleAxis3x3(rand(pos.zzx) * _BendRotationRandom * PI * 0.5, float3(1, 0, 0));
 
 		//草的顶点单独应用风变换
 		float3x3 windTrans = mul(tangentToLocal, windRotation);
@@ -163,21 +165,25 @@ Shader "Saltsuica/SimpleGrass"
 	// 	o.tangent = v.tangent;
 	// 	return o;
 	// }
-	ENDCG
+	ENDHLSL
 
     SubShader
     {
 		Cull Off
+		Tags
+		{
+			"RenderType"="Opaque" 
+			"RenderPipeline" = "UniversalPipeline"
+		}
 
         Pass
         {
 			Tags
 			{
-				"RenderType" = "Opaque"
-				"LightMode" = "ForwardBase"
+				"LightMode" = "UniversalForward"
 			}
 
-            CGPROGRAM
+            HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
 			#pragma geometry geo
@@ -185,17 +191,16 @@ Shader "Saltsuica/SimpleGrass"
 			#pragma hull hull
 			#pragma domain domain
              
-			#include "Lighting.cginc"
 
 			float4 _TopColor;
 			float4 _BottomColor;
 			float _TranslucentGain;
 
-			float4 frag (geometryOutput i, fixed facing : VFACE) : SV_Target
+			float4 frag (geometryOutput i, float facing : VFACE) : SV_Target
             {	
 				return lerp(_BottomColor, _TopColor, i.uv.y); //定义一个底部颜色和顶部颜色，更具uv的v来线性插值出颜色
             }
-            ENDCG
+            ENDHLSL
         }
     }
 }

@@ -68,7 +68,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SnowTex:
-        m_Texture: {fileID: 2800000, guid: 29f14e1658d8120449972a20ac38d819, type: 3}
+        m_Texture: {fileID: 2800000, guid: 92084313fd062f640ada46e2376d8ccb, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SparkleNoise:
@@ -99,7 +99,7 @@ Material:
     - _SnowNoiseScale: 0.199
     - _SnowNoiseWeight: 0.214
     - _SnowTailDepth: 0.5
-    - _SnowTexScale: 1.579
+    - _SnowTexScale: 0.155
     - _SnowTextureOpacity: 1.011
     - _SparkleCutoff: 0.295
     - _SparkleScale: 0.7
