@@ -1,4 +1,4 @@
-Shader "Saltsuica/MySnow"
+Shader "Saltsuica/MagicDusty"
 {
     Properties
     {
@@ -14,6 +14,8 @@ Shader "Saltsuica/MySnow"
         _SparkleNoise("Sparkle Noise", 2D) = "" {}
         _SparkleScale("SparkScale", Range(0, 10)) = 1
         _SparkleCutoff("Spark Cut Off", Range(0, 1)) = 0.1
+        _NightSnowTex("Night Snow Tex", 2D) = "" {}
+        _NightSnowTexScale("Night Snow Tex Scale", Range(0, 2)) = 0.1
 
         _Mask("Mask", 2D) = "" {}
 
@@ -147,11 +149,13 @@ Shader "Saltsuica/MySnow"
 
             sampler2D _BaseTexture;
             sampler2D _SparkleNoise;
+            sampler2D _NightSnowTex;
 
             // rim
             float _RimPower;
             float4 _RimColor;
             float _DaySnowInsensity;
+            float _NightSnowTexScale;
 
             
 
@@ -169,7 +173,17 @@ Shader "Saltsuica/MySnow"
                 float3 topdownNoise = tex2D(_SnowNoise, v.worldPos.xz * _SnowNoiseScale).rgb;
                 float vertexColoredPrimary = step(0.6 * topdownNoise,v.color.r).r;
                 float snowTex = tex2D(_SnowTex, v.worldPos.xz * _SnowTexScale).rgb;
-                float3 snowTexRes = snowTex * vertexColoredPrimary;
+                float3 snowDayTexRes = snowTex * vertexColoredPrimary;
+
+                float nightSnowTex = tex2D(_NightSnowTex, v.worldPos.xz * _NightSnowTexScale).rgb;
+                float3 nightSnowTexRes = nightSnowTex * vertexColoredPrimary;
+
+                float NdotL = saturate(dot(v.planeNormal, _MainLightPosition));
+                float NdotLNagetive = saturate(dot(v.planeNormal, -_MainLightPosition));
+
+                float night = NdotLNagetive;
+                float snowTexRes = snowDayTexRes * smoothstep(0.3, -0.2, night) + nightSnowTexRes * night;
+                // float snowTexRes = nightSnowTexRes * night;
 
                 //for edge
                 float vertexColorEdge = ((step((0.6 - _Edgewidth) * topdownNoise, v.color.r)) * (1 - vertexColoredPrimary)).r;
@@ -179,8 +193,7 @@ Shader "Saltsuica/MySnow"
                 float3 maincolorDay = snowTexRes * _SnowTextureOpacity + _SnowColor;
                 float3 maincolorNight = snowTexRes * _SnowTextureOpacity + _SnowNightColor;
                 // float shadow = SHADOW_ATTENUATION(v);
-                float NdotL = saturate(dot(v.planeNormal, _MainLightPosition));
-                float NdotLNagetive = dot(v.planeNormal, -_MainLightPosition);
+
                 maincolorDay = lerp(maincolorDay, _SnowPathColor * effect.g * 2, saturate(effect.g * 3)).rgb;
                 maincolorNight = lerp(maincolorNight, _SnowPathColor * effect.g * 2, saturate(effect.g * 3)).rgb;
 
