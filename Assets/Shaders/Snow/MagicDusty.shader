@@ -179,10 +179,10 @@ Shader "Saltsuica/MagicDusty"
                 float3 nightSnowTexRes = nightSnowTex * vertexColoredPrimary;
 
                 float NdotL = saturate(dot(v.planeNormal, _MainLightPosition));
-                float NdotLNagetive = saturate(dot(v.planeNormal, -_MainLightPosition));
+                float NdotLNagetive = dot(v.planeNormal, -_MainLightPosition);
 
                 float night = NdotLNagetive;
-                float snowTexRes = snowDayTexRes * smoothstep(0.3, -0.2, night) + nightSnowTexRes * night;
+                float snowTexRes = snowDayTexRes * smoothstep(0.3, -0.1, night) + nightSnowTexRes * saturate(night);
                 // float snowTexRes = nightSnowTexRes * night;
 
                 //for edge
@@ -209,7 +209,7 @@ Shader "Saltsuica/MagicDusty"
 
                 // float4 litMainColors = float4(maincolorDay, 1) * saturate(NdotL) + float4(maincolorNight, 1) * saturate(smoothstep(-0.5, 0.5, NdotLNagetive));
                 // float4 litMainColors = float4(maincolorDay, 1) * shadows * (NdotL + 0.2 * cubicPulse(0.02, 0.5, NdotL)) + float4(baseTextureResult, 1);
-                float4 litMainColors = float4(maincolorDay, 1) * shadows * saturate(NdotL + 0.2 * (1 - step(0.5, NdotL))) + float4(baseTextureResult, 1);
+                float4 litMainColors = float4(maincolorDay, 1) * shadows * saturate(NdotL) + float4(baseTextureResult, 1);
                 // sparles
                 float sparklesStatic = tex2D(_SparkleNoise, v.worldPos.xz * _SparkleScale * 5).r;
                 float sparklesRes = tex2D(_SparkleNoise, (v.worldPos.xz + v.screenPos) * _SparkleScale) * sparklesStatic;
