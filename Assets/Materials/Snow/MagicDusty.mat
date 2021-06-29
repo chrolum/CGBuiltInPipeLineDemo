@@ -27,12 +27,16 @@ Material:
         m_Texture: {fileID: 2800000, guid: ae34b695b180a3c43a5e439f5070a1e2, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _NightSnowTex:
+        m_Texture: {fileID: 2800000, guid: 92084313fd062f640ada46e2376d8ccb, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SnowNoise:
         m_Texture: {fileID: 2800000, guid: 7c05e966fef446a48ba5758ef13f0c97, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SnowTex:
-        m_Texture: {fileID: 2800000, guid: 92084313fd062f640ada46e2376d8ccb, type: 3}
+        m_Texture: {fileID: 2800000, guid: 29f14e1658d8120449972a20ac38d819, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SparkleNoise:
@@ -43,6 +47,7 @@ Material:
     - _DaySnowInsensity: 1
     - _Edgewidth: 0.08
     - _MaxTessDistance: 38.7
+    - _NightSnowTexScale: 0.153
     - _NormalCuttoff: 0.602
     - _RimPower: 20
     - _SnowDepth: 0.64
