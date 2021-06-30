@@ -82,7 +82,7 @@ Material:
     m_Floats:
     - _BaseNoiseScale: 0.178
     - _BumpScale: 1
-    - _CloudCutoff: 0.581
+    - _CloudCutoff: 0.122
     - _CloudScrollSpeed: 3.28
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
@@ -106,7 +106,7 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _StarsCutoff: 0.084
+    - _StarsCutoff: 0.015
     - _StarsScale: 1
     - _StarsSpeed: 0.08
     - _SunRadius: 0.103

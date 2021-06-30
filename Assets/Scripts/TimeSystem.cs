@@ -8,6 +8,7 @@ public class TimeSystem : MonoBehaviour
     // public Transform Moon;
 
     public Transform LightSource;
+    public int RealTimeOfGameDayBySec = 12 * 60;
 
     public float Speed;
     public float prevSpeed;
@@ -24,9 +25,6 @@ public class TimeSystem : MonoBehaviour
     private void Update() {
         quatSun = Quaternion.AngleAxis(Speed, Vector3.right);
         LightSource.rotation = LightSource.rotation * quatSun;
-        // Sun.rotation = Sun.rotation * quatSun;
-        // Moon.rotation = Moon.rotation * quatSun;
-
     }
 
     public void StartSpeedUp()
