@@ -1372,7 +1372,7 @@
     "m_StageCapability": 3,
     "m_BareResource": false,
     "m_Texture": {
-        "m_SerializedTexture": "{\"texture\":{\"fileID\":2800000,\"guid\":\"8aa5c0c51e9b79c4d8504ec5d54ee9f3\",\"type\":3}}",
+        "m_SerializedTexture": "{\"texture\":{\"fileID\":2800000,\"guid\":\"3e9bfd5bdde68c1438213544ce4815cb\",\"type\":3}}",
         "m_Guid": ""
     },
     "m_DefaultType": 0
@@ -2335,8 +2335,8 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -70.99998474121094,
-            "y": -135.00001525878907,
+            "x": 20.000003814697267,
+            "y": -142.99996948242188,
             "width": 128.0,
             "height": 101.00000762939453
         }

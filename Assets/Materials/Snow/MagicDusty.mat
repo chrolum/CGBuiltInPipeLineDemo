@@ -47,7 +47,7 @@ Material:
     - _DaySnowInsensity: 1
     - _Edgewidth: 0.08
     - _MaxTessDistance: 38.7
-    - _NightSnowTexScale: 0.153
+    - _NightSnowTexScale: 0.15
     - _NormalCuttoff: 0.602
     - _RimPower: 20
     - _SnowDepth: 0.64
