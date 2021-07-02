@@ -11,6 +11,8 @@ public class DecalSystem : MonoBehaviour
     public Material m_mat;
 
     MaterialPropertyBlock props;
+
+    public Camera cam;
     
     private void OnEnable() 
     {
@@ -40,6 +42,12 @@ public class DecalSystem : MonoBehaviour
         }
         props.SetColor("_Tint", tint);
         Graphics.DrawMesh(m_cubeMesh, transform.localToWorldMatrix, m_mat, 0, camera, 0, props, false, true, false);
+    }
+
+    private void LateUpdate() 
+    {
+        // if camera is null, draw for all camera
+        Draw(cam);
     }
 
 }
