@@ -13,7 +13,7 @@ public class PlayerPaint : MonoBehaviour
         decalManger = DecalManger.instance;
     }
 
-    public void Paint(int idx, Transform trans = null)
+    public void Paint(int idx)
     {
         if (idx < 0 || idx >= decalTextures.Count)
         {
@@ -21,23 +21,22 @@ public class PlayerPaint : MonoBehaviour
             return;
         }
 
-        
+        RaycastHit hit;
+        var dir = Vector3.Normalize(decalGOPos.position - new Vector3(transform.position.x, decalGOPos.position.y, transform.position.z));
+        if (Physics.Raycast(decalGOPos.position, dir, out hit, 10))
+        {
+            var hitPos = hit.point + 0.1f * dir;
+            var tex = decalTextures[idx];
+            var decalGO = decalManger.GetDecalInstance();
 
-        var tex = decalTextures[idx];
-        var decalGO = decalManger.GetDecalInstance();
-        if (trans == null)
-        {
-            decalGO.transform.position = decalGOPos.position;
+            decalGO.transform.position = hitPos;
             decalGO.transform.rotation = decalGOPos.rotation;
+            var decal = decalGO.GetComponent<Decal>();
+            
+            decal.texture = tex;
         }
-        else
-        {
-            //TODO: transform caculate by mouse aim
-            decalGO.transform.position = trans.position;
-            decalGO.transform.rotation = trans.rotation;
-        }
-        var decal = decalGO.GetComponent<Decal>();
-        
-        decal.texture = tex;
+
+
+
     }
 }
