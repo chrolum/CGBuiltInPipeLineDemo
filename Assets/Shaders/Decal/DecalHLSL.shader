@@ -10,16 +10,15 @@ Shader "Unlit/DecalHLSL"
             "RenderType"="Transparent"
             "RenderPipeline"="UniversalPipeline"
         }
-        LOD 100
         ZWrite On
 		Blend SrcAlpha OneMinusSrcAlpha
 
         // uncomment to have selective decals
-		Stencil {
-            Ref 5
-            Comp Equal
-            Fail zero
-		}
+		// Stencil {
+        //     Ref 5
+        //     Comp Equal
+        //     Fail zero
+		// }
 
         Pass
         {
@@ -54,10 +53,11 @@ Shader "Unlit/DecalHLSL"
                 Varyings OUT;
 
                 OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                OUT.uv = IN.texcoord;
                 OUT.screenUV = ComputeScreenPos(OUT.positionHCS);
                 // float3(1,1,-1) 是交换左右手系的z轴
                 //ray 记录了以摄像机为原点，到该顶点的方向
-                OUT.ray = TransformWorldToView(TransformObjectToWorld(IN.positionOS) * float3(1, 1, -1));
+                OUT.ray = TransformWorldToView(TransformObjectToWorld(IN.positionOS)) * float3(1, 1, -1);
                 return OUT;
             }
 
@@ -78,16 +78,17 @@ Shader "Unlit/DecalHLSL"
                 i.ray = i.ray * (_ProjectionParams.z / i.ray.z);
                 float4 posVS = float4(i.ray * depth, 1);
                 float4 posWS = mul(unity_CameraToWorld, posVS);
-                float3 posOS = TransformWorldToObject(posWS);
+                float3 posOS = TransformWorldToObject(posWS).xyz;
 
                 // decal用了一个cube mesh, 标准正方体，这里是将超出正方体的贴图输出给截断掉
                 clip(float3(0.5, 0.5, 0.5) - abs(posOS.xyz));
 
                 // 将原点挪回正方体的左下角
-                i.uv = posOS + 0.5;
+                i.uv = posOS.xz + 0.5;
 
                 float4 col = tex2D(UNITY_ACCESS_INSTANCED_PROP(Props, _MainTex), i.uv);
-
+                clip(col.a - 0.1);
+                col *= col.a;
                 return col;
 
             }

@@ -19,27 +19,12 @@ public class DecalSystem : MonoBehaviour
     
     private void OnEnable() 
     {
-        props = new MaterialPropertyBlock();
-        // Camera.onPreCull -= DrawWithCamera;
-        // Camera.onPreCull += DrawWithCamera;      
+        props = new MaterialPropertyBlock(); 
     }
-
-    // private void OnDisable() 
-    // {
-    //     Camera.onPreCull -= DrawWithCamera;
-    // }
-
-    // private void DrawWithCamera(Camera camera) 
-    // {
-    //     if (camera) 
-    //     {
-    //         Draw(camera);
-    //     }
-    // }
 
     private void Draw(Camera camera)
     {
-        if (texture)
+        if (texture != null)
         {
             props.SetTexture("_MainTex", texture);
         }
