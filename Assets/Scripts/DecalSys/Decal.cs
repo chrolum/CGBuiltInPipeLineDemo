@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine.Rendering.Universal;
 
 [ExecuteInEditMode]
-public class DecalSystem : MonoBehaviour
+public class Decal : MonoBehaviour
 {
     
     public Texture texture;
