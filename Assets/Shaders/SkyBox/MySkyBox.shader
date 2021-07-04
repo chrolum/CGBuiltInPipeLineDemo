@@ -59,7 +59,7 @@ Shader "Saltsuica/MySkybox"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType"="Background" }
         LOD 100
 
         Pass

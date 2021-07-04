@@ -128,6 +128,6 @@ Material:
     - _NightTopColor: {r: 0, g: 0, b: 0, a: 1}
     - _StarsSkyColor: {r: 0.02193842, g: 0.16037738, b: 0.092515156, a: 1}
     - _SunColor: {r: 1, g: 0.9309381, b: 0.8066038, a: 1}
-    - _SunSetColor: {r: 1, g: 0.30084747, b: 0, a: 1}
+    - _SunSetColor: {r: 1, g: 0.47070253, b: 0, a: 1}
     - __HorizonColorDay: {r: 1, g: 0.042452812, b: 0.042452812, a: 1}
   m_BuildTextureStacks: []
