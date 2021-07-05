@@ -5371,7 +5371,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 494301118}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.24, y: 0, z: 13.1}
+  m_LocalPosition: {x: -5.24, y: 0.27, z: 13.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -5463,7 +5463,7 @@ GameObject:
   - component: {fileID: 515443750}
   - component: {fileID: 515443753}
   - component: {fileID: 515443754}
-  - component: {fileID: 515443755}
+  - component: {fileID: 515443756}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -5602,7 +5602,7 @@ MonoBehaviour:
   m_RequiresDepthTexture: 0
   m_RequiresColorTexture: 0
   m_Version: 2
---- !u!114 &515443755
+--- !u!114 &515443756
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -5611,9 +5611,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 515443749}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a04d55c0aeb1d6f4bb0fe00c2bba1c92, type: 3}
+  m_Script: {fileID: 11500000, guid: 670e047d578c02e428620dfb951585b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  scanTime: 0
+  scanSpeed: 10
+  scanCamera: {fileID: 515443751}
+  scanMat: {fileID: 2100000, guid: 6b9c2a13893acca4487ad644f413c5f9, type: 2}
 --- !u!1001 &537154892
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12813,6 +12817,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   radius: 10
+  scanEffectsProcessor: {fileID: 515443756}
 --- !u!23 &3232982971138805205
 MeshRenderer:
   m_ObjectHideFlags: 0

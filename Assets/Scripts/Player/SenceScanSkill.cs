@@ -5,10 +5,13 @@ using UnityEngine;
 public class SenceScanSkill : MonoBehaviour
 {
     public float radius = 10f;
+    public ScanEffectsProcessor scanEffectsProcessor;
+    
 
     public void StartScan()
     {
         Debug.Log("Start Scan");
+        scanEffectsProcessor.StartProcess();
         return;
     }
 }

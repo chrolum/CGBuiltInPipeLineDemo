@@ -24,8 +24,8 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _CamFar: 0
-    - _ScanDepth: 0.559708
-    - _ScanWidth: 1
+    - _CamFar: 500
+    - _ScanDepth: 0.048219543
+    - _ScanWidth: 3.3
     m_Colors: []
   m_BuildTextureStacks: []
