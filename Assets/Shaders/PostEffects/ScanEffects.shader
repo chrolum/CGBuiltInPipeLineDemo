@@ -2,7 +2,7 @@ Shader "Saltsuica/ScanEffects"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+        _MainTex ("Texture", 2D) = "" {}
         _ScanDepth ("Scan Depth", float) = 0
         _CamFar ("Camera Far", float) = 0
         _ScanWidth ("Scan Edge width", Range(0, 5)) = 1
@@ -56,7 +56,7 @@ Shader "Saltsuica/ScanEffects"
                 float depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, i.depthUV);
                 float linearDepth = Linear01Depth(depth, _ZBufferParams);
 
-                if (linearDepth < _ScanDepth)
+                if (linearDepth < _ScanDepth && linearDepth>_ScanDepth-_ScanWidth/_CamFar&&linearDepth<1)
                 {
                     float scanPer = 1 - (_ScanDepth-linearDepth) / (_ScanWidth / _CamFar);
                     return lerp(col, float4(1,0,0,1), scanPer);
