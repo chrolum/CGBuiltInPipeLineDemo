@@ -12,6 +12,7 @@ public class ScanEffectsProcessor : MonoBehaviour
 
     private void Awake() 
     {
+        scanCamera.depthTextureMode = DepthTextureMode.Depth;
         scanMat.SetFloat("_CamFar", scanCamera.farClipPlane);
     }
     private void Update() 
