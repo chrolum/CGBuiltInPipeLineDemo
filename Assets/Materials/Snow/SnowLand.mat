@@ -97,7 +97,7 @@ Material:
     - _SnowHeight: 1.04
     - _SnowInteractRadius: 1.84
     - _SnowNoiseScale: 0.498
-    - _SnowNoiseWeight: 0.066
+    - _SnowNoiseWeight: 0.112
     - _SnowTailDepth: 0.5
     - _SnowTexScale: 2
     - _SnowTextureOpacity: 1.06

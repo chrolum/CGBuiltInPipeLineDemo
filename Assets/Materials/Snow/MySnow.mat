@@ -138,7 +138,7 @@ Material:
     - _SnowDepth: 0.5
     - _SnowHeight: 1
     - _SnowNoiseScale: 0.1
-    - _SnowNoiseWeight: 0.1
+    - _SnowNoiseWeight: 1
     - _SnowTexScale: 0.1
     - _SnowTextureOpacity: 0.3
     - _SparkleCutoff: 0.1
