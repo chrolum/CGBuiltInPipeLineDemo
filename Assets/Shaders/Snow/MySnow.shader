@@ -211,33 +211,34 @@ Shader "Saltsuica/MySnow"
                 extraColors.a = 1;
                 // return float4(shadows, shadows, shadows, 1);
                 float4 finalColors = litMainColors + float4(maincolorNight, 1) * saturate(smoothstep(-0.5, 0.5, NdotLNagetive));
+
                 // return float4(shadows, shadows, shadows, 1);
                 // return float4(v.normal, 1);
-                return finalColors;
+                return finalColors + unity_AmbientSky;
                 // return float4(maincolorDay, 1) * saturate(NdotL);
             }
 
             ENDHLSL
         }
 
-        // Pass
-        // {
+        Pass
+        {
 
-        //     Tags{ "LightMode" = "ShadowCaster" }
+            Tags{ "LightMode" = "ShadowCaster" }
 
-        //     ZWrite On
-        //     ZTest LEqual
+            ZWrite Off
+            ZTest LEqual
 
-        //     HLSLPROGRAM
-        //     #pragma fragment frag
+            HLSLPROGRAM
+            #pragma fragment frag
 
-        //     half4 frag(Varyings IN) : SV_Target
-        //     {
-        //         return 0;
-        //     }
+            half4 frag(Varyings IN) : SV_Target
+            {
+                return 0;
+            }
 
-        //     ENDHLSL
-        // }
+            ENDHLSL
+        }
 
         
     }
