@@ -85,27 +85,27 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _MaxTessDistance: 38.7
+    - _MaxTessDistance: 77.6
     - _Metallic: 0
     - _Mode: 0
-    - _NormalCuttoff: 0.602
+    - _NormalCuttoff: 0.548
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _RimPower: 20
     - _SmoothnessTextureChannel: 0
     - _SnowDepth: 0.64
-    - _SnowHeight: 1.06
+    - _SnowHeight: 1.04
     - _SnowInteractRadius: 1.84
     - _SnowNoiseScale: 0.498
-    - _SnowNoiseWeight: 0.214
+    - _SnowNoiseWeight: 0.066
     - _SnowTailDepth: 0.5
-    - _SnowTexScale: 1.7
-    - _SnowTextureOpacity: 1.011
+    - _SnowTexScale: 2
+    - _SnowTextureOpacity: 1.06
     - _SparkleCutoff: 0.295
     - _SparkleScale: 0.7
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _Tess: 11.5
+    - _Tess: 53.6
     - _TessAmount: 2.1
     - _UVSec: 0
     - _ZWrite: 1

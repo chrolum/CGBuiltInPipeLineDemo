@@ -132,6 +132,8 @@ Shader "Saltsuica/Grass"
 	// create a geometry shader
 	// [maxvertexcount(3)] 
 	[maxvertexcount(BLADE_SEGMENTS * 2 + 1)] 
+
+	
 	void geo(triangle vertexOutput IN[3], inout TriangleStream<geometryOutput> triStream)
 	{
 		geometryOutput o;
@@ -189,29 +191,7 @@ Shader "Saltsuica/Grass"
 		}
 
 		triStream.Append(GenerateGrassVertex(pos, 0, forward, height, float2(0.5, 1), windTrans, forward));
-
-		// o.pos = UnityObjectToClipPos(pos + float4(0.5, 0, 0, 1));
-		// triStream.Append(o);
-		// o.pos = UnityObjectToClipPos(pos + float4(-0.5, 0, 0, 1));
-		// triStream.Append(o);
-		// o.pos = UnityObjectToClipPos(pos + float4(0, 1, 0, 1));
-		// triStream.Append(o);
 	}
-
-	
-
-
-
-	// vertexOutput vert(vertexInput v)
-	// {
-	// 	// return UnityObjectToClipPos(vertex);// 这里已经把顶点输出到裁剪空间了
-	// 	// return vertex;
-	// 	vertexOutput o;
-	// 	o.vertex = v.vertex;
-	// 	o.normal = v.normal;
-	// 	o.tangent = v.tangent;
-	// 	return o;
-	// }
 	ENDHLSL
 
     SubShader
@@ -248,7 +228,9 @@ Shader "Saltsuica/Grass"
             {	
 				float3 normal = facing > 0 ? i.normal : -i.normal;
 				// float shadow = SHADOW_ATTENUATION(i);
-				float NdotL = saturate(saturate(dot(normal, _MainLightPosition)) + _TranslucentGain);
+				// float NdotL = saturate(saturate(dot(normal, _MainLightPosition)) + _TranslucentGain);
+				float NdotL = saturate(dot(normal, _MainLightPosition));
+				NdotL = max(clamp(NdotL + 0.3, 0, 1), _TranslucentGain);
 
 				//TODO: add ambient
 				// float3 ambient = ShadeSH9(float4(normal, 1));
