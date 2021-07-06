@@ -94,7 +94,7 @@ Material:
     - _RimPower: 20
     - _SmoothnessTextureChannel: 0
     - _SnowDepth: 0.64
-    - _SnowHeight: 1.06
+    - _SnowHeight: 0
     - _SnowInteractRadius: 1.84
     - _SnowNoiseScale: 0.199
     - _SnowNoiseWeight: 0.214
