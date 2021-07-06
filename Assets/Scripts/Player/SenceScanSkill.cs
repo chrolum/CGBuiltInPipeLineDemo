@@ -11,7 +11,7 @@ public class SenceScanSkill : MonoBehaviour
     public void StartScan()
     {
         Debug.Log("Start Scan");
-        scanEffectsProcessor.StartProcess();
+        scanEffectsProcessor.StartProcess(radius);
         return;
     }
 }
