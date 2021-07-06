@@ -78,7 +78,6 @@ Shader "Saltsuica/InteractWater"
 
             float4 _Color;
             float4 _NightColor;
-            sampler2D _CameraDepthTexture;
             float _Scale;
             sampler2D _NoiseTex;
 
@@ -114,14 +113,15 @@ Shader "Saltsuica/InteractWater"
                 o.normal = v.normal;
                 return o;
             }
-
+            SAMPLER(sampler_CameraDepthTexture);
+            TEXTURE2D(_CameraDepthTexture);
             half4 frag (Varyings i) : SV_Target
             {
                 // sample the texture
                 float distortx = tex2D(_NoiseTex, (i.positionWS.xz * _Scale) + (_Time.x * 2)).r;
                 half4 col = tex2D(_MainTex, (i.positionWS.xz * _Scale) - (distortx * _TextureDistort));
                 
-                half depth = LinearEyeDepth(tex2Dproj(_CameraDepthTexture, float4(i.positionSS.xz / i.positionSS.w, 0, 0)), _ZBufferParams);
+                half depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, i.positionSS.xy / i.positionSS.w), _ZBufferParams);
                 // apply fog
 
                 //for foamline
