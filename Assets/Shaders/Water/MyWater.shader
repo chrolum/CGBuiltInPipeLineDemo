@@ -1,4 +1,4 @@
-Shader "Unlit/MyWater"
+Shader "Saltsuica/MyWater"
 {
     Properties
     {

@@ -3,6 +3,7 @@ Shader "Saltsuica/InteractWater"
     Properties
     {
         _Color("Tint", Color) = (1, 1, 1, .5)//discard
+        _NightColor("Night Color", Color) = (1, 1, 1, .5)
         _FoamC("Foam", Color) = (1, 1, 1, .5)
         _MainTex ("Texture", 2D) = "white" {}
         _NoiseTex("Noise", 2D) = "" {}
@@ -30,11 +31,11 @@ Shader "Saltsuica/InteractWater"
         Cull Off
         Blend OneMinusDstColor one
 
-        GrabPass
-        {
-            Name "BASE"
-            Tags{ "LightMode" = "Always" }
-        }
+        // GrabPass
+        // {
+        //     Name "BASE"
+        //     Tags{ "LightMode" = "Always" }
+        // }
 
         HLSLINCLUDE
         #pragma vertex vert
@@ -76,6 +77,7 @@ Shader "Saltsuica/InteractWater"
             float4 _MainTex_ST;
 
             float4 _Color;
+            float4 _NightColor;
             sampler2D _CameraDepthTexture;
             float _Scale;
             sampler2D _NoiseTex;
@@ -90,7 +92,7 @@ Shader "Saltsuica/InteractWater"
             float _FoamC;
 
             uniform float3 _Position;
-            uniform sampler2D _GlobalEffectRT;
+            uniform sampler2D _GlobalWaterEffectRT;
             uniform float _OrthographicCamSize;
 
             float _TextureDistort;
@@ -127,13 +129,14 @@ Shader "Saltsuica/InteractWater"
                 // float3 ambient = ShadeSH9(float4(i.normal, 1));
                 //TODO: use NdotL
                 float NdotL = saturate(dot(i.normal, _MainLightPosition));
+                NdotL = max(clamp(NdotL + 0.3, 0, 1), 0.3);// 防止晚上水消失了
                 col *= _MainLightColor * NdotL; //改用直接光照，不再自定义颜色
 
                 float2 uv = i.positionWS.xz - _Position.xz;
                 uv = uv / (_OrthographicCamSize * 2);
                 uv += 0.5;
-                float ripples = tex2D(_GlobalEffectRT, uv).b;
-                ripples = step(0.99, ripples * 2);
+                float ripples = tex2D(_GlobalWaterEffectRT, uv).b;
+                ripples = step(0.6, ripples * 2);
                 distortx += (ripples * 2);
 
                 col += (step(0.4 * distortx, foamLine) *_FoamC);
@@ -145,4 +148,5 @@ Shader "Saltsuica/InteractWater"
             ENDHLSL
         }
     }
+    Fallback off
 }
