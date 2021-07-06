@@ -24,6 +24,9 @@ Shader "Saltsuica/Grass"
 
 		[Header(Addition setting)]
 		_LightIntensity("Addition Light Intensity", Range(0, 3)) = 0.1
+		_Radius("Interavtive radius", Range(0, 10)) = 1
+		_Strength("Interacvity Strength", Range(0, 10)) = 1
+
     }
 
 	HLSLINCLUDE
@@ -119,6 +122,9 @@ Shader "Saltsuica/Grass"
 
 	float _BladeForward;
 	float _BladeCurve;
+	uniform float3 _Position;
+	float _Radius;
+	float _Strength;
 
 	geometryOutput GenerateGrassVertex(float3 vertexPos, float x, float y,
 		float z, float2 uv, float3x3 transformation, float forward)
@@ -166,6 +172,14 @@ Shader "Saltsuica/Grass"
 		// 正确的效果应该是草的根部不动
 		float3x3 windRotation = AngleAxis3x3(PI * windSample, windDir);
 
+		// Interactivity
+		float3 positionWS = TransformObjectToWorld(pos.xyz);
+		float dist = distance(_Position, positionWS);
+		float3 radius = 1 - saturate(dist / _Radius);
+		float3 sphereDisp = positionWS - _Position;
+		sphereDisp *= radius;
+		sphereDisp = clamp(sphereDisp.xyz * _Strength, -0.8, 0.8);
+
 		float3x3 facingRotationMatrix = AngleAxis3x3(rand(pos) * TWO_PI, float3(0, 0, 1));
 		float3x3 bendRotationMatrix = AngleAxis3x3(rand(pos.zzx) * _BendRotationRandom * PI * 0.5, float3(1, 0, 0));
 
@@ -186,11 +200,12 @@ Shader "Saltsuica/Grass"
 			float segmentHeigth = height * t;
 			float segmentForward = forward * pow(t, _BladeCurve);//why pow
 			float3x3 trans = i == 0 ? facingTrans : windTrans;
-			triStream.Append(GenerateGrassVertex(pos, segmentWidth, segmentForward, segmentHeigth, float2(0, t), trans, segmentForward));
-			triStream.Append(GenerateGrassVertex(pos, -segmentWidth, segmentForward, segmentHeigth, float2(1, t), trans, segmentForward));
+			float3 newPos = i == 0 ? pos : pos + ((float3(sphereDisp.x, sphereDisp.y, sphereDisp.z)) * t);
+			triStream.Append(GenerateGrassVertex(newPos, segmentWidth, segmentForward, segmentHeigth, float2(0, t), trans, segmentForward));
+			triStream.Append(GenerateGrassVertex(newPos, -segmentWidth, segmentForward, segmentHeigth, float2(1, t), trans, segmentForward));
 		}
 
-		triStream.Append(GenerateGrassVertex(pos, 0, forward, height, float2(0.5, 1), windTrans, forward));
+		triStream.Append(GenerateGrassVertex(pos + float3(sphereDisp.x, sphereDisp.y, sphereDisp.z), 0, forward, height, float2(0.5, 1), windTrans, forward));
 	}
 	ENDHLSL
 

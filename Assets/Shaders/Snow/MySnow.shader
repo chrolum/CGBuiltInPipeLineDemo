@@ -212,10 +212,7 @@ Shader "Saltsuica/MySnow"
                 // return float4(shadows, shadows, shadows, 1);
                 float4 finalColors = litMainColors + float4(maincolorNight, 1) * saturate(smoothstep(-0.5, 0.5, NdotLNagetive));
 
-                // return float4(shadows, shadows, shadows, 1);
-                // return float4(v.normal, 1);
                 return finalColors + unity_AmbientSky;
-                // return float4(maincolorDay, 1) * saturate(NdotL);
             }
 
             ENDHLSL
