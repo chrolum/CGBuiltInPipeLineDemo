@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73d1254ae8c227c459641fa065d527dc, type: 3}
   m_Name: NewScanRendererFeature
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   TheRenderPassEvent: 600
 --- !u!114 &11400000
 MonoBehaviour:

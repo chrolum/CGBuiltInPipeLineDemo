@@ -119,6 +119,7 @@ Shader "Saltsuica/MySnow"
             "RenderPipeline" = "UniversalPipeline"
         }
         LOD 100
+        ZWrite On
 
         
 

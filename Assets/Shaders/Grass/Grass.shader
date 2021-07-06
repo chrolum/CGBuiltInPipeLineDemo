@@ -286,5 +286,15 @@ Shader "Saltsuica/Grass"
 
 			ENDHLSL
 		}
+
+        //Depth only prepass
+        Pass
+        {
+            Name "DepthOnly"
+            Tags{"LightMode" = "DepthOnly"}
+ 
+            ZWrite On
+            ColorMask 0
+        }
     }
 }
