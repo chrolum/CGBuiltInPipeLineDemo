@@ -5,16 +5,14 @@ using UnityEngine;
 public class SetInteractiveWaterShader : MonoBehaviour
 {
     [SerializeField]
-    public RenderTexture rt;
+    public RenderTexture water_rt;
     public Transform target;
 
     private void Awake() {
-        Shader.SetGlobalTexture("_GlobalEffectRT", rt);
-        Shader.SetGlobalFloat("_OrthographicCamSize", GetComponent<Camera>().orthographicSize);
+        Shader.SetGlobalTexture("_GlobalWaterEffectRT", water_rt);
     }
 
     private void Update() {
         transform.position = new Vector3(target.transform.position.x, transform.position.y, target.transform.position.z);
-        Shader.SetGlobalVector("_Position", target.position);
     }
 }
