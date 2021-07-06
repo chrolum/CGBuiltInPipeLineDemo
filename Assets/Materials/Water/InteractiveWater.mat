@@ -65,7 +65,7 @@ Material:
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _Foam: 9.58
+    - _Foam: 10
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -87,4 +87,5 @@ Material:
     - _Color: {r: 0.6185475, g: 0.9433962, b: 0.88984716, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _FoamC: {r: 1, g: 1, b: 1, a: 0.5}
+    - _NightColor: {r: 1, g: 1, b: 1, a: 0.5}
   m_BuildTextureStacks: []

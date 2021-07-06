@@ -17,10 +17,13 @@ public class ScanEffectsProcessor : MonoBehaviour
     float radius;
 
     public UniversalRenderPipelineAsset asset;
+
+    public List<GameObject> scanableObj;
     private void Awake() 
     {
         scanCamera.depthTextureMode = DepthTextureMode.Depth;
         scanMat.SetFloat("_CamFar", scanCamera.farClipPlane);
+        scanableObj = new List<GameObject>();
     }
     private void Update() 
     {

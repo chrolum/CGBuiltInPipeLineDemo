@@ -79,9 +79,11 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
+    - _Radius: 2.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
+    - _Strength: 9.89
     - _TessellationUniform: 4.81
     - _TranslucentGain: 0.372
     - _UVSec: 0
